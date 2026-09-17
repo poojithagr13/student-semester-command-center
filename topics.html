@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Topics Management</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f6f9;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            margin-bottom: 15px;
+        }
+
+        input,
+        select,
+        button {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .topic-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .topic-item h3 {
+            margin-bottom: 8px;
+        }
+
+        .topic-item p {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .progress-container {
+            background: #e5e7eb;
+            border-radius: 10px;
+            height: 10px;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            background: #22c55e;
+            height: 10px;
+            border-radius: 10px;
+        }
+
+        .delete-btn {
+            background: #dc2626;
+            margin-top: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #b91c1c;
+        }
+
+        .empty-message {
+            color: #777;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Topics Management</h1>
+        <p class="subtitle">
+            Manage your subjects, topics and learning progress.
+        </p>
+
+        <!-- Add Topic Section -->
+        <div class="card">
+
+            <h2>Add New Topic</h2>
+
+            <form id="topicForm">
+
+                <label for="subject">Subject</label>
+                <input
+                    type="text"
+                    id="subject"
+                    placeholder="Enter subject name"
+                    required
+                >
+
+                <label for="topic">Topic Name</label>
+                <input
+                    type="text"
+                    id="topic"
+                    placeholder="Enter topic name"
+                    required
+                >
+
+                <label for="unit">Unit</label>
+                <input
+                    type="text"
+                    id="unit"
+                    placeholder="Enter unit number"
+                    required
+                >
+
+                <label for="status">Status</label>
+                <select id="status">
+                    <option value="Not Started">Not Started</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+
+                <button type="submit">Add Topic</button>
+
+            </form>
+
+        </div>
+
+        <!-- Topics List -->
+        <div class="card">
+
+            <h2>My Topics</h2>
+
+            <div id="topicsList">
+                <p class="empty-message">
+                    No topics added yet.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const topicForm = document.getElementById("topicForm");
+        const topicsList = document.getElementById("topicsList");
+
+        let topics = JSON.parse(localStorage.getItem("studentTopics")) || [];
+
+        function displayTopics() {
+
+            topicsList.innerHTML = "";
+
+            if (topics.length === 0) {
+
+                topicsList.innerHTML =
+                    '<p class="empty-message">No topics added yet.</p>';
+
+                return;
+            }
+
+            topics.forEach((topic, index) => {
+
+                let progress = 0;
+
+                if (topic.status === "In Progress") {
+                    progress = 50;
+                }
+
+                if (topic.status === "Completed") {
+                    progress = 100;
+                }
+
+                const topicDiv = document.createElement("div");
+
+                topicDiv.className = "topic-item";
+
+                topicDiv.innerHTML = `
+                    <h3>${escapeHTML(topic.topic)}</h3>
+
+                    <p><strong>Subject:</strong>
+                    ${escapeHTML(topic.subject)}</p>
+
+                    <p><strong>Unit:</strong>
+                    ${escapeHTML(topic.unit)}</p>
+
+                    <p><strong>Status:</strong>
+                    ${escapeHTML(topic.status)}</p>
+
+                    <div class="progress-container">
+                        <div class="progress-bar"
+                             style="width: ${progress}%">
+                        </div>
+                    </div>
+
+                    <button class="delete-btn"
+                            onclick="deleteTopic(${index})">
+                        Delete
+                    </button>
+                `;
+
+                topicsList.appendChild(topicDiv);
+
+            });
+
+        }
+
+        function escapeHTML(text) {
+
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+        topicForm.addEventListener("submit", function(event) {
+
+            event.preventDefault();
+
+            const subject = document.getElementById("subject").value.trim();
+            const topic = document.getElementById("topic").value.trim();
+            const unit = document.getElementById("unit").value.trim();
+            const status = document.getElementById("status").value;
+
+            if (!subject || !topic || !unit) {
+                alert("Please fill all fields.");
+                return;
+            }
+
+            const newTopic = {
+                subject: subject,
+                topic: topic,
+                unit: unit,
+                status: status
+            };
+
+            topics.push(newTopic);
+
+            localStorage.setItem(
+                "studentTopics",
+                JSON.stringify(topics)
+            );
+
+            topicForm.reset();
+
+            displayTopics();
+
+        });
+
+        function deleteTopic(index) {
+
+            if (confirm("Are you sure you want to delete this topic?")) {
+
+                topics.splice(index, 1);
+
+                localStorage.setItem(
+                    "studentTopics",
+                    JSON.stringify(topics)
+                );
+
+                displayTopics();
+
+            }
+
+        }
+
+        displayTopics();
+
+    </script>
+
+</body>
+</html>
