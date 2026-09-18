@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject Details</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .subject-title {
+            font-size: 28px;
+            color: #1e3a5f;
+            margin-bottom: 10px;
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .option-card {
+            background: white;
+            width: 200px;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .option-card:hover {
+            transform: translateY(-5px);
+        }
+        .option-card h3 {
+            margin: 15px 0 10px;
+            color: #1e3a5f;
+        }
+        .option-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .icon {
+            font-size: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Subject Details</h1>
+
+    <div class="container">
+        <a href="subjects.html" class="back-link">← Back to Subjects</a>
+
+        <h2 class="subject-title" id="subjectName">Loading...</h2>
+        <p>Select an option below</p>
+
+        <div class="options">
+            <div class="option-card" onclick="openSection('textbook')">
+                <div class="icon">📘</div>
+                <h3>Textbook</h3>
+                <p>Official textbook / reference material</p>
+            </div>
+
+            <div class="option-card" onclick="openSection('notes')">
+                <div class="icon">📝</div>
+                <h3>Notes</h3>
+                <p>AI-generated notes as per syllabus</p>
+            </div>
+
+            <div class="option-card" onclick="openSection('pyq')">
+                <div class="icon">❓</div>
+                <h3>PYQ</h3>
+                <p>Previous Year Questions</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get subject name from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const subject = urlParams.get('name') || "Unknown Subject";
+
+        document.getElementById("subjectName").textContent = subject;
+        document.title = subject + " - Details";
+
+        function openSection(type) {
+            // For now just show a message. We will connect real content later.
+            alert("You selected: " + type.toUpperCase() + "\n\nSubject: " + subject + "\n\n(We will add real PDFs and content in the next steps)");
+        }
+    </script>
+
+</body>
+</html>
