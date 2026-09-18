@@ -17,9 +17,10 @@
     <div class="cards">
 
         <div class="card">
-            <h2>📚 Subjects</h2>
-            <p>0</p>
-        </div>
+    <h2>📚 Subjects</h2>
+    <p id="subjectCount">0</p>
+    <button onclick="addSubject()">Add Subject</button>
+</div>
 
         <div class="card">
             <h2>📖 Topics</h2>
@@ -39,6 +40,17 @@
     </div>
 
 </div>
+
+<script>
+function addSubject() {
+    const subject = prompt("Enter your subject name:");
+
+    if (subject) {
+        const count = document.getElementById("subjectCount");
+        count.textContent = parseInt(count.textContent) + 1;
+    }
+}
+</script>
 
 </body>
 </html>
