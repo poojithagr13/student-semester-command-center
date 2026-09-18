@@ -11,17 +11,21 @@
     <div class="dashboard">
 
     <h1>Student Semester Command Center</h1>
-
+    <nav style="margin: 15px 0;">
+        <a href="topics.html" style="color: white; text-decoration: none; background: #2563eb; padding: 8px 16px; border-radius: 5px;">Go to Topics</a>
+    </nav>
     <p>Welcome to your academic dashboard.</p>
 
+    
     <div class="cards">
-
-        <div class="card">
-    <h2>📚 Subjects</h2>
-    <p id="subjectCount">0</p>
-    <button onclick="addSubject()">Add Subject</button>
-</div>
-
+        <div class="card" onclick="window.location.href='subjects.html'" style="cursor: pointer;">
+            <h2>📚 Subjects</h2>
+            <p id="subjectCount">0</p>
+            <button onclick="event.stopPropagation(); window.location.href='subjects.html'">
+                Manage Subjects
+            </button>
+        </div>
+               
         <div class="card">
             <h2>📖 Topics</h2>
             <p>0</p>
@@ -40,17 +44,35 @@
     </div>
 
 </div>
-
 <script>
-function addSubject() {
-    const subject = prompt("Enter your subject name:");
+    // Load subjects from localStorage
+    let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
 
-    if (subject) {
-        const count = document.getElementById("subjectCount");
-        count.textContent = parseInt(count.textContent) + 1;
+    // Update the count on the page
+    function updateSubjectCount() {
+        document.getElementById("subjectCount").textContent = subjects.length;
     }
-}
-</script>
 
+    // Add a new subject
+    function addSubject() {
+        const subject = prompt("Enter your subject name:");
+
+        if (subject && subject.trim() !== "") {
+            // Avoid adding empty or duplicate names
+            const name = subject.trim();
+
+            if (subjects.includes(name)) {
+                alert("This subject already exists!");
+                return;
+            }
+
+            subjects.push(name);
+            localStorage.setItem("studentSubjects", JSON.stringify(subjects));
+            updateSubjectCount();
+        }
+    }
+
+    // Show the correct count when page loads
+    updateSubjectCount();
 </body>
 </html>
