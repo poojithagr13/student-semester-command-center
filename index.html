@@ -7,6 +7,31 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <script>
+  // Protect the page - redirect to login if not logged in
+  if (!localStorage.getItem('studentName')) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #1e3a8a; color: white;">
+  <div>
+    Welcome, <strong id="userName"></strong>
+  </div>
+  <button onclick="logout()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+    Logout
+  </button>
+</div>
+
+<script>
+  // Show the user's name
+  document.getElementById('userName').textContent = localStorage.getItem('studentName') || 'Student';
+
+  function logout() {
+    localStorage.removeItem('studentName');
+    localStorage.removeItem('studentPassword');
+    window.location.href = 'login.html';
+  }
+</script>
 
     <div class="dashboard">
 
@@ -28,29 +53,30 @@
                
         <div class="card">
             <h2>📖 Topics</h2>
-            <p>0</p>
+            <p id="topicCount">0</p>
         </div>
 
         <div class="card">
             <h2>📝 Questions</h2>
-            <p>0</p>
+            <p id="topicCount">0</p>
         </div>
 
-        <div class="card">
-            <h2>📊 Overall Progress</h2>
-            <p>0%</p>
-        </div>
-
+       <div class="card">
+    <h2>📊 Overall Progress</h2>
+    <p id="overallProgress">0%</p>
+</div>
     </div>
 
 </div>
 <script>
     // Load subjects from localStorage
     let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
+    let topics = JSON.parse(localStorage.getItem("studentTopics")) || [];
 
     // Update the count on the page
     function updateSubjectCount() {
         document.getElementById("subjectCount").textContent = subjects.length;
+        document.getElementById("topicCount").textContent = topics.length;
     }
 
     // Add a new subject
@@ -74,5 +100,11 @@
 
     // Show the correct count when page loads
     updateSubjectCount();
+    </script>
+
+
+    
+
+
 </body>
 </html>

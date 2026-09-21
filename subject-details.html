@@ -95,10 +95,30 @@
         document.getElementById("subjectName").textContent = subject;
         document.title = subject + " - Details";
 
-        function openSection(type) {
-            // For now just show a message. We will connect real content later.
-            alert("You selected: " + type.toUpperCase() + "\n\nSubject: " + subject + "\n\n(We will add real PDFs and content in the next steps)");
-        }
+       function openSection(type) {
+
+    if (type.toLowerCase() === "notes") {
+
+        window.location.href =
+            "notes.html?name=" + encodeURIComponent(subject);
+
+    } else if (type.toLowerCase() === "pyq") {
+
+        window.location.href =
+            "pyq.html?name=" + encodeURIComponent(subject);
+
+    } else {
+
+        alert(
+            "You selected " +
+            type.toUpperCase() +
+            "\nSubject: " +
+            subject
+        );
+
+    }
+
+}
     </script>
 
 </body>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Exam Calendar - Student Semester Command Center</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>Exam Calendar</h1>
+        <p>Keep track of your upcoming semester exams.</p>
+    </header>
+
+    <main>
+
+        <section class="calendar-container">
+
+            <h2>Upcoming Exams</h2>
+
+            <button id="addExamBtn" type="button">
+                + Add Exam
+            </button>
+
+            <div id="examForm" style="display: none;">
+
+                <h3>Add an Exam</h3>
+
+                <label for="examSubject">Subject</label>
+
+                <input
+                    type="text"
+                    id="examSubject"
+                    placeholder="Enter subject name"
+                >
+
+                <label for="examDate">Exam Date</label>
+
+                <input
+                    type="date"
+                    id="examDate"
+                >
+
+                <button id="saveExamBtn" type="button">
+                    Save Exam
+                </button>
+
+                <button id="cancelExamBtn" type="button">
+                    Cancel
+                </button>
+
+            </div>
+
+            <div id="examList">
+                <p>No exams added yet.</p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+
+
+    const addExamBtn = document.getElementById("addExamBtn");
+    const examForm = document.getElementById("examForm");
+    const saveExamBtn = document.getElementById("saveExamBtn");
+    const cancelExamBtn = document.getElementById("cancelExamBtn");
+
+    const examSubject = document.getElementById("examSubject");
+    const examDate = document.getElementById("examDate");
+    const examList = document.getElementById("examList");
+
+    let exams = JSON.parse(localStorage.getItem("studentExams")) || [];
+
+    // Open the Add Exam form
+    addExamBtn.addEventListener("click", function () {
+        examForm.style.display = "block";
+    });
+
+    // Close the Add Exam form
+    cancelExamBtn.addEventListener("click", function () {
+        examForm.style.display = "none";
+    });
+
+    // Save a new exam
+    saveExamBtn.addEventListener("click", function () {
+
+        const subject = examSubject.value.trim();
+        const date = examDate.value;
+
+        if (subject === "" || date === "") {
+            alert("Please enter the subject and exam date.");
+            return;
+        }
+
+        const exam = {
+            subject: subject,
+            date: date
+        };
+
+        exams.push(exam);
+
+        localStorage.setItem("studentExams", JSON.stringify(exams));
+
+        displayExams();
+
+        examSubject.value = "";
+        examDate.value = "";
+
+        examForm.style.display = "none";
+    });
+
+    // Display exams
+    function displayExams() {
+
+        if (exams.length === 0) {
+            examList.innerHTML = "<p>No exams added yet.</p>";
+            return;
+        }
+
+        examList.innerHTML = "";
+
+        exams.forEach(function (exam, index) {
+
+            const examItem = document.createElement("div");
+
+examItem.className = "exam-item";
+
+examItem.innerHTML =
+    '<div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px;">' +
+        '<div>' +
+            '<strong style="font-size: 20px;">' + exam.subject + '</strong>' +
+            '<p style="margin: 8px 0 0 0;">Exam Date: ' + exam.date + '</p>' +
+        '</div>' +
+        '<button onclick="deleteExam(' + index + ')">Delete</button>' +
+    '</div>';
+
+examList.appendChild(examItem);
+        });
+    }
+
+    // Delete an exam
+    function deleteExam(index) {
+        exams.splice(index, 1);
+
+        localStorage.setItem("studentExams", JSON.stringify(exams));
+        
+        displayExams();
+    }
+
+</script>
+
+
+
+</body>
+</html>

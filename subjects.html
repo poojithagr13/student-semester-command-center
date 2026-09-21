@@ -108,20 +108,24 @@
     </div>
 
     <script>
-        let subjects = JSON.parse(localStorage.getItem("studentSubjects"));
+       const defaultSubjects = [
+    "Statistics and Probability",
+    "Data Structures and its Applications",
+    "Python for Data Science",
+    "Operating System",
+    "Digital Design and Computer Organization",
+    "Foundations of Artificial Intelligence"
+];
 
-// If no subjects are saved yet, load the official ISE 3rd sem subjects
-if (!subjects || subjects.length === 0) {
-    subjects = [
-        "Statistics and Probability",
-        "Data Structures and its Applications",
-        "Python for Data Science",
-        "Operating System",
-        "Digital Design and Computer Organization",
-        "Foundations of Artificial Intelligence"
-    ];
-    localStorage.setItem("studentSubjects", JSON.stringify(subjects));
-}
+let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
+
+defaultSubjects.forEach(function (subject) {
+    if (!subjects.includes(subject)) {
+        subjects.unshift(subject);
+    }
+});
+
+localStorage.setItem("studentSubjects", JSON.stringify(subjects));
        
         function displaySubjects() {
             const list = document.getElementById("subjectsList");
@@ -139,16 +143,18 @@ if (!subjects || subjects.length === 0) {
                      <span style="cursor:pointer; color:#1e3a5f;" onclick="openSubject('${escapeHTML(subject)}')">
                         ${escapeHTML(subject)}
                      </span>
-                     <button class="delete-btn" onclick="event.stopPropagation(); deleteSubject(${index})">
-                     Delete
-                     </button>
+                     ${defaultSubjects.includes(subject) ? "" : `
+    <button class="delete-btn" onclick="event.stopPropagation(); deleteSubject(${index})">
+        Delete
+    </button>
+`}
                 `;
               
                 list.appendChild(div);
             });
         }
         function openSubject(name) {
-            window.location.href = "subject-detail.html?name=" + encodeURIComponent(name);
+            window.location.href = "subject-details.html?name=" + encodeURIComponent(name);
         
             displaySubjects();
         }

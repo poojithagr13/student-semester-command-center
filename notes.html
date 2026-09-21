@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Notes</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <h1>Notes</h1>
+
+    <p id="subjectTitle"></p>
+
+    <button onclick="showAddForm()">+ Add Note</button>
+
+    <div id="addForm" style="display: none; margin-top: 20px;">
+
+        <h2>Add Notes</h2>
+
+        <label>Note Title</label><br>
+
+        <input
+            type="text"
+            id="noteTitle"
+            placeholder="Example: Unit 1 Notes"
+        >
+
+        <br><br>
+
+        <label>Note Details</label><br>
+
+        <textarea
+            id="noteDetails"
+            placeholder="Enter note details"
+        ></textarea>
+
+        <br><br>
+
+        <label>Upload Notes</label><br>
+
+        <input
+            type="file"
+            id="noteFile"
+            accept=".pdf,image/*"
+        >
+
+        <br><br>
+
+        <button onclick="addNote()">Add Note</button>
+
+    </div>
+
+    <h2>Available Notes</h2>
+
+    <div id="notesList">
+        <p>Loading notes...</p>
+    </div>
+
+    <script>
+        const SUPABASE_URL =
+            "https://bjfccfveekebgbkqreyp.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        const urlParams =
+            new URLSearchParams(window.location.search);
+
+        const subject =
+            urlParams.get("name");
+
+
+        document.getElementById("subjectTitle").textContent =
+            subject
+                ? "Subject: " + subject
+                : "Subject not selected";
+
+
+        function showAddForm() {
+
+            document.getElementById("addForm").style.display =
+                "block";
+
+        }
+
+
+        async function addNote() {
+
+            const title =
+                document.getElementById("noteTitle").value.trim();
+
+            const details =
+                document.getElementById("noteDetails").value.trim();
+
+            const file =
+                document.getElementById("noteFile").files[0];
+
+
+            if (!subject) {
+
+                alert("Subject not selected.");
+
+                return;
+            }
+
+
+            if (title === "" || details === "") {
+
+                alert("Please fill in all fields.");
+
+                return;
+            }
+
+
+            let fileUrl = "";
+
+
+            if (file) {
+
+                const fileName =
+                    Date.now() + "_" + file.name;
+
+
+                const { error: uploadError } =
+                    await supabaseClient
+                        .storage
+                        .from("notes-files")
+                        .upload(fileName, file);
+
+
+                if (uploadError) {
+
+                    alert(
+                        "File upload failed: " +
+                        uploadError.message
+                    );
+
+                    return;
+                }
+
+
+                const { data: publicUrlData } =
+                    supabaseClient
+                        .storage
+                        .from("notes-files")
+                        .getPublicUrl(fileName);
+
+
+                fileUrl =
+                    publicUrlData.publicUrl;
+            }
+            const { error } =
+                await supabaseClient
+                    .from("notes")
+                    .insert([
+                        {
+                            subject: subject,
+                            title: title,
+                            details: details,
+                            file_url: fileUrl
+                        }
+                    ]);
+
+
+            if (error) {
+
+                alert(
+                    "Could not save note: " +
+                    error.message
+                );
+
+                return;
+            }
+
+
+            alert("Note added successfully!");
+
+
+            document.getElementById("noteTitle").value = "";
+
+            document.getElementById("noteDetails").value = "";
+
+            document.getElementById("noteFile").value = "";
+
+
+            document.getElementById("addForm").style.display =
+                "none";
+
+
+            loadNotes();
+
+        }
+
+
+        async function loadNotes() {
+
+            const { data, error } =
+                await supabaseClient
+                    .from("notes")
+                    .select("*")
+                    .eq("subject", subject)
+                    .order("created_at", { ascending: false });
+
+
+            if (error) {
+
+                document.getElementById("notesList").innerHTML =
+                    "<p>Could not load notes: " +
+                    error.message +
+                    "</p>";
+
+                return;
+            }
+
+
+            const notesList =
+                document.getElementById("notesList");
+
+
+            if (!data || data.length === 0) {
+
+                notesList.innerHTML =
+                    "<p>No notes uploaded yet.</p>";
+
+                return;
+            }
+
+
+           notesList.innerHTML =
+    '<div style="display: flex; align-items: center; gap: 30px; font-weight: bold; margin-bottom: 10px;">' +
+        '<span style="width: 220px;">Title</span>' +
+        '<span style="width: 300px;">Description</span>' +
+        '<span style="width: 180px;">Notes</span>' +
+    '</div>';
+
+            data.forEach(function (note) {
+
+                const item =
+                    document.createElement("div");
+
+
+                item.style.marginBottom = "6px";
+                item.style.padding = "6px 10px";
+                item.style.border = "1px solid #ddd";
+                item.style.borderRadius = "12px";
+                item.style.display = "flex";
+                item.style.alignItems = "center";
+                item.style.justifyContent = "flex-start";
+                item.style.gap = "30px";
+
+item.innerHTML =
+
+    '<span style="width: 220px;">' +
+    note.title +
+    '</span>' +
+
+    '<span style="width: 300px;">' +
+    note.details +
+    '</span>' +
+
+    (
+        note.file_url
+            ? '<span style="width: 180px;"><a href="' +
+              note.file_url +
+              '" target="_blank">View Notes</a></span>'
+            : '<span style="width: 180px;">No file attached.</span>'
+    );
+
+                notesList.appendChild(item);
+
+            });
+
+        }
+
+
+        loadNotes();
+
+    </script>
+
+</body>
+
+</html>
