@@ -97,28 +97,32 @@
 
        function openSection(type) {
 
-    if (type.toLowerCase() === "notes") {
+            if (type.toLowerCase() === "notes") {
 
-        window.location.href =
-            "notes.html?name=" + encodeURIComponent(subject);
+                window.location.href =
+                "notes.html?name=" + encodeURIComponent(subject);
+                } 
+            else if (type.toLowerCase() === "pyq") {
 
-    } else if (type.toLowerCase() === "pyq") {
+                window.location.href =
+                "pyq.html?name=" + encodeURIComponent(subject);
+                }
+            else if (type.toLowerCase() === "textbook") {
 
-        window.location.href =
-            "pyq.html?name=" + encodeURIComponent(subject);
+                window.location.href =
+                "textbook.html?name=" + encodeURIComponent(subject);
+                }
+            else {
+                alert(
+                "You selected " +
+                type.toUpperCase() +
+                "\nSubject: " +
+                subject
+                );
 
-    } else {
+                }
 
-        alert(
-            "You selected " +
-            type.toUpperCase() +
-            "\nSubject: " +
-            subject
-        );
-
-    }
-
-}
+        }
     </script>
 
 </body>
