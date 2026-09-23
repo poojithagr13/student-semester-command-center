@@ -1,193 +1,360 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Student Semester Command Center</title>
+
     <link rel="stylesheet" href="style.css">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
-  <script>
-    // Protect the page - redirect to login if not logged in
-    if (!localStorage.getItem('studentName')) {
-          window.location.href = 'login.html';
+
+    <!-- Protect the dashboard -->
+    <script>
+        if (!localStorage.getItem('studentName')) {
+            window.location.href = 'login.html';
         }
-  </script>
-      <div class="top-bar">
+    </script>
+
+
+    <!-- Top Navigation -->
+    <div class="top-bar">
+
         <div class="welcome-text">
             Welcome, <strong id="userName"></strong>
         </div>
-    
+
         <button class="logout-btn" onclick="logout()">
             Logout
         </button>
-      </div>
 
-    <script>
-      // Show the user's name
-      document.getElementById('userName').textContent = localStorage.getItem('studentName') || 'Student';
+    </div>
 
-      function logout() {
-        localStorage.removeItem('studentName');
-        localStorage.removeItem('studentPassword');
-        window.location.href = 'login.html';
-      }
-    </script>
 
-        <div class="dashboard">
+    <!-- Dashboard -->
+    <main class="dashboard">
 
-          <h1>Student Semester Command Center</h1>
-            <p>Welcome to your academic dashboard.</p>
+        <h1>Student Semester Command Center</h1>
 
-    
+        <p>
+            Your central place to manage subjects, exams, tasks and academic progress.
+        </p>
+
+
+        <!-- Dashboard Cards -->
         <div class="cards">
-            <div class="card" onclick="window.location.href='subjects.html'" >
-                <h2>📚 Subjects</h2>
-                <p id="subjectCount">0</p>
-                <button onclick="event.stopPropagation(); window.location.href='subjects.html'">
+
+            <!-- Subjects -->
+            <div
+                class="card"
+                onclick="window.location.href='subjects.html'"
+                style="cursor: pointer;"
+            >
+
+                <h2>Subjects</h2>
+
+                <p>
+                    <strong id="subjectCount">0</strong>
+                    subjects available
+                </p>
+
+                <button
+                    onclick="event.stopPropagation(); window.location.href='subjects.html'"
+                >
                     Manage Subjects
                 </button>
-            </div>
-               
-            <div class="card" onclick="window.location.href='calendar.html'" >
-              <h2>📅 Exam Calendar</h2>
-              <p>View your exam schedule</p>
+
             </div>
 
-            <div class="card" onclick="window.location.href='todo.html'">
-              <h2>📋 To-Do List</h2>
-              <p id="todoCount">0 tasks remaining</p>
+
+            <!-- Exam Calendar -->
+            <div
+                class="card"
+                onclick="window.location.href='calendar.html'"
+                style="cursor: pointer;"
+            >
+
+                <h2>Exam Calendar</h2>
+
+                <p>
+                    View your official college events, exams and important dates.
+                </p>
+
+                <button
+                    onclick="event.stopPropagation(); window.location.href='calendar.html'"
+                >
+                    View Calendar
+                </button>
+
             </div>
 
-            <div class="card" onclick="window.location.href='topics.html'" >
-              <h2>📊 Overall Progress</h2>
-              <p id="overallProgress">0%</p>
+
+            <!-- To-Do -->
+            <div
+                class="card"
+                onclick="window.location.href='todo.html'"
+                style="cursor: pointer;"
+            >
+
+                <h2>To-Do List</h2>
+
+                <p id="todoCount">
+                    0 tasks remaining
+                </p>
+
+                <button
+                    onclick="event.stopPropagation(); window.location.href='todo.html'"
+                >
+                    View Tasks
+                </button>
+
             </div>
+
+
+            <!-- Overall Progress -->
+            <div
+                class="card"
+                onclick="window.location.href='topics.html'"
+                style="cursor: pointer;"
+            >
+
+                <h2>Overall Progress</h2>
+
+                <p id="overallProgress">
+                    0%
+                </p>
+
+                <button
+                    onclick="event.stopPropagation(); window.location.href='topics.html'"
+                >
+                    View Progress
+                </button>
+
+            </div>
+
         </div>
 
-        </div>
+    </main>
+
+
+    <!-- User Information -->
     <script>
-      const SUPABASE_URL = "https://bjfccfveekebgbkqreyp.supabase.co";
-      const SUPABASE_KEY = "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
 
-      const supabaseClient = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_KEY
-      );
+        document.getElementById("userName").textContent =
+            localStorage.getItem("studentName") || "Student";
 
-        // Load subjects from localStorage
-      let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
-      let topics = JSON.parse(localStorage.getItem("studentTopics")) || [];
 
-      // Update the count on the page
-      function updateSubjectCount() {
-        document.getElementById("subjectCount").textContent = subjects.length;
-        document.getElementById("topicCount").textContent = topics.length;
-      }
+        function logout() {
 
-      // Add a new subject
-      function addSubject() {
-          const subject = prompt("Enter your subject name:");
+            localStorage.removeItem("studentName");
+            localStorage.removeItem("studentPassword");
 
-          if (subject && subject.trim() !== "") {
-              // Avoid adding empty or duplicate names
-            const name = subject.trim();
+            window.location.href = "login.html";
+        }
 
-            if (subjects.includes(name)) {
-              alert("This subject already exists!");
-              return;
+    </script>
+
+
+    <!-- Supabase -->
+    <script>
+
+        const SUPABASE_URL =
+            "https://bjfccfveekebgbkqreyp.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        /* ==========================================
+           SUBJECT COUNT
+           ========================================== */
+
+        let subjects =
+            JSON.parse(
+                localStorage.getItem("studentSubjects")
+            ) || [];
+
+
+        function updateSubjectCount() {
+
+            const subjectCount =
+                document.getElementById("subjectCount");
+
+            subjectCount.textContent =
+                subjects.length;
+        }
+
+
+        updateSubjectCount();
+
+
+        /* ==========================================
+           TODO COUNT
+           ========================================== */
+
+        async function updateTodoCount() {
+
+            const {
+                data: userData,
+                error: userError
+            } = await supabaseClient.auth.getUser();
+
+
+            if (userError || !userData.user) {
+                return;
             }
 
-            subjects.push(name);
-            localStorage.setItem("studentSubjects", JSON.stringify(subjects));
-            updateSubjectCount();
-          }
-      }
 
-      // Show the correct count when page loads
-      updateSubjectCount();
-      
-      async function updateTodoCount() {
+            const userId =
+                userData.user.id;
 
-        const { data: userData, error: userError } =
-          await supabaseClient.auth.getUser();
 
-        if (userError || !userData.user) {
-          return;
+            const {
+                data: tasks,
+                error
+            } = await supabaseClient
+                .from("todos")
+                .select("completed")
+                .eq("user_id", userId)
+                .eq("completed", false);
+
+
+            if (error) {
+
+                console.error(
+                    "Error loading todo count:",
+                    error
+                );
+
+                return;
+            }
+
+
+            const remainingTasks =
+                tasks.length;
+
+
+            const todoCount =
+                document.getElementById("todoCount");
+
+
+            if (remainingTasks === 1) {
+
+                todoCount.textContent =
+                    "1 task remaining";
+
+            } else {
+
+                todoCount.textContent =
+                    remainingTasks +
+                    " tasks remaining";
+
+            }
+
         }
 
-        const userId = userData.user.id;
 
-        const { data: tasks, error } = await supabaseClient
-            .from("todos")
-            .select("completed")
-            .eq("user_id", userId)
-            .eq("completed", false);
+        updateTodoCount();
 
-        if (error) {
-            console.error("Error loading todo count:", error);
-            return;
+
+        /* ==========================================
+           OVERALL PROGRESS
+           ========================================== */
+
+        async function updateOverallProgress() {
+
+            const {
+                data: userData,
+                error: userError
+            } = await supabaseClient.auth.getUser();
+
+
+            if (userError || !userData.user) {
+                return;
+            }
+
+
+            const userId =
+                userData.user.id;
+
+
+            const {
+                data: topics,
+                error
+            } = await supabaseClient
+                .from("topics")
+                .select("status")
+                .eq("user_id", userId);
+
+
+            if (error) {
+
+                console.error(
+                    "Error loading progress:",
+                    error
+                );
+
+                return;
+            }
+
+
+            const totalTopics =
+                topics.length;
+
+
+            let completedTopics = 0;
+
+
+            topics.forEach(topic => {
+
+                if (topic.status === "Completed") {
+                    completedTopics++;
+                }
+
+            });
+
+
+            let progress = 0;
+
+
+            if (totalTopics > 0) {
+
+                progress =
+                    Math.round(
+                        (completedTopics / totalTopics) * 100
+                    );
+
+            }
+
+
+            const overallProgress =
+                document.getElementById(
+                    "overallProgress"
+                );
+
+
+            overallProgress.textContent =
+                progress + "%";
+
         }
 
-        const remainingTasks = tasks.length;
 
-        const todoCount = document.getElementById("todoCount");
+        updateOverallProgress();
 
-        if (remainingTasks === 1) {
-            todoCount.textContent = "1 task remaining";
-        } else {
-            todoCount.textContent = remainingTasks + " tasks remaining";
-        }
-      }
-      updateTodoCount();
-      async function updateOverallProgress() {
-
-        const { data: userData, error: userError } =
-          await supabaseClient.auth.getUser();
-
-        if (userError || !userData.user) {
-           return;
-        }
-
-        const userId = userData.user.id;
-
-        const { data: topics, error } = await supabaseClient
-            .from("topics")
-            .select("status")
-            .eq("user_id", userId);
-
-        if (error) {
-          console.error("Error loading progress:", error);
-          return;
-        }
-
-        const totalTopics = topics.length;
-
-        let completedTopics = 0;
-
-        topics.forEach(topic => {
-          if (topic.status === "Completed") {
-            completedTopics++;
-          }
-        });
-
-        let progress = 0;
-
-        if (totalTopics > 0) {
-          progress = Math.round(
-            (completedTopics / totalTopics) * 100
-          );
-        }
-
-        const overallProgress =
-          document.getElementById("overallProgress");
-
-        overallProgress.textContent = progress + "%";
-      }
-
-      updateOverallProgress();
     </script>
-    
+
 </body>
+
 </html>

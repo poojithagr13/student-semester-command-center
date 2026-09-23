@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Previous Year Questions</title>
+    <title>Previous Year Questions | Student Semester Command Center</title>
 
     <link rel="stylesheet" href="style.css">
 
@@ -14,56 +14,117 @@
 
 <body>
 
-    <h1>Previous Year Questions</h1>
+    <main class="container">
 
-    <p id="subjectTitle"></p>
+        <!-- Back to Subject -->
+        <a href="#" id="backLink" class="back-link">
+            ← Back to Subject
+        </a>
 
-    <button onclick="showAddForm()">+ Add PYQ</button>
 
-    <div id="addForm" style="display: none; margin-top: 20px;">
+        <!-- Page Header -->
+        <h1 id="subjectTitle">
+            Previous Year Questions
+        </h1>
 
-        <h2>Add a Previous Year Question Paper</h2>
+        <p class="subtitle">
+            Practice previous year question papers for this subject.
+        </p>
 
-        <label>Paper Title</label><br>
-        <input type="text" id="paperTitle" placeholder="Example: Semester 3 PYQ">
 
-        <br><br>
+        <!-- Add PYQ -->
+        <div class="add-form">
 
-        <label>Year</label><br>
-        <input type="number" id="paperYear" placeholder="Example: 2025">
+            <h2>Add Question Paper</h2>
 
-        <br><br>
+            <div class="form-group">
 
-        <label>Paper Details</label><br>
-        <textarea id="paperDetails" placeholder="Enter question paper details"></textarea>
+                <label for="title">
+                    Paper Title
+                </label>
 
-        <br><br>
+                <input
+                    type="text"
+                    id="title"
+                    placeholder="Example: End Semester Examination"
+                >
 
-        <label>Upload Question Paper</label><br>
-        <input type="file" id="paperFile" accept=".pdf,image/*">
+            </div>
 
-        <br><br>
 
-        <button onclick="addPYQ()">Add PYQ</button>
+            <div class="form-group">
 
-    </div>
+                <label for="year">
+                    Year
+                </label>
 
-    <h2>Available PYQs</h2>
+                <input
+                    type="number"
+                    id="year"
+                    placeholder="Example: 2025"
+                    min="1900"
+                    max="2100"
+                >
 
-    <div id="pyqList">
+            </div>
 
-    <div style="display: flex; gap: 8px; font-weight: bold; margin-bottom: 8px;">
-        <span>Title</span>
-        <span>Year</span>
-        <span>Description</span>
-        <span>Question Paper</span>
-    </div>
 
-    <p>Loading PYQs...</p>
+            <div class="form-group">
 
-</div>
+                <label for="details">
+                    Details
+                </label>
+
+                <textarea
+                    id="details"
+                    placeholder="Enter any useful details about this question paper"
+                ></textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="file">
+                    Question Paper
+                </label>
+
+                <input
+                    type="file"
+                    id="file"
+                    accept=".pdf,image/*"
+                >
+
+            </div>
+
+
+            <button onclick="addPYQ()">
+                Add Question Paper
+            </button>
+
+        </div>
+
+
+        <!-- PYQ List -->
+        <section>
+
+            <h2>Available Question Papers</h2>
+
+            <div
+                id="pyqList"
+                class="resource-list"
+            ></div>
+
+        </section>
+
+    </main>
+
 
     <script>
+
+        /* ==========================================
+           SUPABASE
+           ========================================== */
 
         const SUPABASE_URL =
             "https://bjfccfveekebgbkqreyp.supabase.co";
@@ -71,134 +132,231 @@
         const SUPABASE_KEY =
             "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
 
+
         const supabaseClient =
             window.supabase.createClient(
                 SUPABASE_URL,
                 SUPABASE_KEY
             );
 
-        const urlParams =
-            new URLSearchParams(window.location.search);
+
+        /* ==========================================
+           GET SUBJECT
+           ========================================== */
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
 
         const subject =
-            urlParams.get("name");
+            params.get("name");
 
-        document.getElementById("subjectTitle").textContent =
-            subject
-                ? "Subject: " + subject
-                : "Subject not selected";
-                function showAddForm() {
 
-            document.getElementById("addForm").style.display = "block";
+        const subjectTitle =
+            document.getElementById("subjectTitle");
+
+
+        if (subject) {
+
+            subjectTitle.textContent =
+                subject + " — Previous Year Questions";
+
+        } else {
+
+            subjectTitle.textContent =
+                "Previous Year Questions";
 
         }
 
 
+        /* ==========================================
+           BACK LINK
+           ========================================== */
+
+        const backLink =
+            document.getElementById("backLink");
+
+
+        if (subject) {
+
+            backLink.href =
+                "subject-details.html?name=" +
+                encodeURIComponent(subject);
+
+        } else {
+
+            backLink.href =
+                "subjects.html";
+
+        }
+
+
+        /* ==========================================
+           ADD PYQ
+           ========================================== */
+
         async function addPYQ() {
-
-            const title =
-                document.getElementById("paperTitle").value.trim();
-
-            const year =
-                document.getElementById("paperYear").value;
-
-            const details =
-                document.getElementById("paperDetails").value.trim();
-
-            const file =
-                document.getElementById("paperFile").files[0];
-
 
             if (!subject) {
 
-                alert("Subject not selected.");
-
-                return;
-            }
-
-
-            if (title === "" || year === "" || details === "") {
-
-                alert("Please fill in all fields.");
-
-                return;
-            }
-
-
-            let fileUrl = "";
-
-
-            if (file) {
-
-                const fileName =
-                    Date.now() + "_" + file.name;
-
-
-                const { error: uploadError } =
-                    await supabaseClient
-                        .storage
-                        .from("pyq-files")
-                        .upload(fileName, file);
-
-
-                if (uploadError) {
-
-                    alert(
-                        "File upload failed: " +
-                        uploadError.message
-                    );
-
-                    return;
-                }
-
-
-                const { data: publicUrlData } =
-                    supabaseClient
-                        .storage
-                        .from("pyq-files")
-                        .getPublicUrl(fileName);
-
-
-                fileUrl =
-                    publicUrlData.publicUrl;
-            }
-          const { error } =
-                await supabaseClient
-                    .from("pyqs")
-                    .insert([
-                        {
-                            subject: subject,
-                            title: title,
-                            year: Number(year),
-                            details: details,
-                            file_url: fileUrl
-                        }
-                    ]);
-
-
-            if (error) {
-
                 alert(
-                    "Could not save PYQ: " +
-                    error.message
+                    "No subject was selected."
                 );
 
                 return;
             }
 
 
-            alert("PYQ added successfully!");
+            const title =
+                document
+                    .getElementById("title")
+                    .value
+                    .trim();
 
 
-            document.getElementById("paperTitle").value = "";
+            const year =
+                document
+                    .getElementById("year")
+                    .value
+                    .trim();
 
-            document.getElementById("paperYear").value = "";
 
-            document.getElementById("paperDetails").value = "";
+            const details =
+                document
+                    .getElementById("details")
+                    .value
+                    .trim();
 
-            document.getElementById("paperFile").value = "";
 
-            document.getElementById("addForm").style.display = "none";
+            const fileInput =
+                document.getElementById("file");
+
+
+            const file =
+                fileInput.files[0];
+
+
+            if (!title || !year || !details || !file) {
+
+                alert(
+                    "Please fill in all fields and select a file."
+                );
+
+                return;
+            }
+
+
+            /* ------------------------------------------
+               Upload file
+               ------------------------------------------ */
+
+            const fileName =
+                Date.now() +
+                "_" +
+                file.name;
+
+
+            const {
+                error: uploadError
+            } = await supabaseClient
+                .storage
+                .from("pyq-files")
+                .upload(
+                    fileName,
+                    file
+                );
+
+
+            if (uploadError) {
+
+                console.error(
+                    "File upload error:",
+                    uploadError
+                );
+
+                alert(
+                    "Unable to upload the question paper."
+                );
+
+                return;
+            }
+
+
+            /* ------------------------------------------
+               Get public URL
+               ------------------------------------------ */
+
+            const {
+                data: publicData
+            } = supabaseClient
+                .storage
+                .from("pyq-files")
+                .getPublicUrl(fileName);
+
+
+            const fileUrl =
+                publicData.publicUrl;
+
+
+            /* ------------------------------------------
+               Save PYQ
+               ------------------------------------------ */
+
+            const {
+                error: insertError
+            } = await supabaseClient
+                .from("pyqs")
+                .insert([
+                    {
+                        subject: subject,
+                        title: title,
+                        year: parseInt(year),
+                        details: details,
+                        file_url: fileUrl
+                    }
+                ]);
+
+
+            if (insertError) {
+
+                console.error(
+                    "Database error:",
+                    insertError
+                );
+
+                alert(
+                    "File uploaded, but the question paper could not be saved."
+                );
+
+                return;
+            }
+
+
+            alert(
+                "Question paper added successfully."
+            );
+
+
+            /* Clear form */
+
+            document.getElementById(
+                "title"
+            ).value = "";
+
+
+            document.getElementById(
+                "year"
+            ).value = "";
+
+
+            document.getElementById(
+                "details"
+            ).value = "";
+
+
+            fileInput.value = "";
 
 
             loadPYQs();
@@ -206,87 +364,145 @@
         }
 
 
+        /* ==========================================
+           LOAD PYQs
+           ========================================== */
+
         async function loadPYQs() {
 
-            const { data, error } =
-                await supabaseClient
-                    .from("pyqs")
-                    .select("*")
-                    .eq("subject", subject)
-                    .order("year", { ascending: false });
+            if (!subject) {
+
+                document.getElementById(
+                    "pyqList"
+                ).innerHTML = `
+                    <div class="empty-message">
+                        No subject selected.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+                .from("pyqs")
+                .select("*")
+                .eq("subject", subject)
+                .order(
+                    "year",
+                    {
+                        ascending: false
+                    }
+                );
 
 
             if (error) {
 
-                document.getElementById("pyqList").innerHTML =
-                    "<p>Could not load PYQs: " +
-                    error.message +
-                    "</p>";
+                console.error(
+                    "Error loading question papers:",
+                    error
+                );
+
+                document.getElementById(
+                    "pyqList"
+                ).innerHTML = `
+                    <div class="empty-message">
+                        Unable to load question papers.
+                    </div>
+                `;
 
                 return;
             }
+
+
             const pyqList =
-                document.getElementById("pyqList");
+                document.getElementById(
+                    "pyqList"
+                );
+
+
+            pyqList.innerHTML = "";
 
 
             if (!data || data.length === 0) {
 
-                pyqList.innerHTML =
-                    "<p>No PYQs uploaded yet.</p>";
+                pyqList.innerHTML = `
+                    <div class="empty-message">
+                        No question papers available for this subject yet.
+                    </div>
+                `;
 
                 return;
             }
 
 
-          pyqList.innerHTML =
-    '<div style="display: flex; align-items: center; gap: 30px; font-weight: bold; margin-bottom: 10px;">' +
-        '<span style="width: 220px;">Title</span>' +
-        '<span style="width: 80px;">Year</span>' +
-        '<span style="width: 300px;">Description</span>' +
-        '<span style="width: 180px;">Question Paper</span>' +
-    '</div>';
-            data.forEach(function (pyq) {
+            data.forEach(paper => {
 
-                const item =
+                const card =
                     document.createElement("div");
 
-                item.style.marginBottom = "6px";
-item.style.padding = "6px 10px";
-item.style.border = "1px solid #ddd";
-item.style.borderRadius = "12px";
-item.style.display = "flex";
-item.style.alignItems = "center";
-item.style.justifyContent = "flex-start";
-item.style.gap = "30px";
-item.style.background = "#ffffff";
+                card.className =
+                    "resource-card";
 
 
-           item.innerHTML =
-    '<span style="width: 220px;">' +
-    pyq.title +
-    '</span>' +
+                const title =
+                    document.createElement("h3");
 
-    '<span style="width: 80px;">' +
-    pyq.year +
-    '</span>' +
+                title.textContent =
+                    paper.title;
 
-    '<span style="width: 300px;">' +
-    pyq.details +
-    '</span>' +
 
-    (
-        pyq.file_url
-            ? '<span style="width: 180px;"><a href="' +
-              pyq.file_url +
-              '" target="_blank">View Question Paper</a></span>'
-            : '<span style="width: 180px;">No file attached.</span>'
-    );
+                const year =
+                    document.createElement("p");
 
-pyqList.appendChild(item);
+                year.innerHTML =
+                    "<strong>Year:</strong> " +
+                    String(paper.year);
+
+
+                const details =
+                    document.createElement("p");
+
+                details.textContent =
+                    paper.details ||
+                    "No additional details provided.";
+
+
+                const fileLink =
+                    document.createElement("a");
+
+                fileLink.href =
+                    paper.file_url;
+
+                fileLink.target =
+                    "_blank";
+
+                fileLink.rel =
+                    "noopener noreferrer";
+
+                fileLink.textContent =
+                    "Open Question Paper";
+
+
+                card.appendChild(title);
+                card.appendChild(year);
+                card.appendChild(details);
+                card.appendChild(fileLink);
+
+
+                pyqList.appendChild(card);
+
             });
 
         }
 
+
+        /* ==========================================
+           INITIAL LOAD
+           ========================================== */
 
         loadPYQs();
 

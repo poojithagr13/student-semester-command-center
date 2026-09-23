@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Notes</title>
+    <title>Notes | Student Semester Command Center</title>
 
     <link rel="stylesheet" href="style.css">
 
@@ -14,61 +14,107 @@
 
 <body>
 
-    <h1>Notes</h1>
+    <main class="container">
 
-    <p id="subjectTitle"></p>
+        <!-- Back to Subject -->
+        <a href="#" id="backLink" class="back-link">
+            ← Back to Subject
+        </a>
 
-    <button onclick="showAddForm()">+ Add Note</button>
 
-    <div id="addForm" style="display: none; margin-top: 20px;">
+        <!-- Page Header -->
+        <h1 id="subjectTitle">
+            Notes
+        </h1>
 
-        <h2>Add Notes</h2>
+        <p class="subtitle">
+            Add and access study notes for this subject.
+        </p>
 
-        <label>Note Title</label><br>
 
-        <input
-            type="text"
-            id="noteTitle"
-            placeholder="Example: Unit 1 Notes"
-        >
+        <!-- Add Note -->
+        <div class="add-form">
 
-        <br><br>
+            <h2>Add Note</h2>
 
-        <label>Note Details</label><br>
+            <div class="form-group">
 
-        <textarea
-            id="noteDetails"
-            placeholder="Enter note details"
-        ></textarea>
+                <label for="title">
+                    Note Title
+                </label>
 
-        <br><br>
+                <input
+                    type="text"
+                    id="title"
+                    placeholder="Enter note title"
+                >
 
-        <label>Upload Notes</label><br>
+            </div>
 
-        <input
-            type="file"
-            id="noteFile"
-            accept=".pdf,image/*"
-        >
 
-        <br><br>
+            <div class="form-group">
 
-        <button onclick="addNote()">Add Note</button>
+                <label for="details">
+                    Details
+                </label>
 
-    </div>
+                <textarea
+                    id="details"
+                    placeholder="Enter a short description or details"
+                ></textarea>
 
-    <h2>Available Notes</h2>
+            </div>
 
-    <div id="notesList">
-        <p>Loading notes...</p>
-    </div>
+
+            <div class="form-group">
+
+                <label for="file">
+                    Note File
+                </label>
+
+                <input
+                    type="file"
+                    id="file"
+                    accept=".pdf,image/*"
+                >
+
+            </div>
+
+
+            <button onclick="addNote()">
+                Add Note
+            </button>
+
+        </div>
+
+
+        <!-- Notes List -->
+        <section>
+
+            <h2>Available Notes</h2>
+
+            <div
+                id="notesList"
+                class="resource-list"
+            ></div>
+
+        </section>
+
+    </main>
+
 
     <script>
+
+        /* ==========================================
+           SUPABASE
+           ========================================== */
+
         const SUPABASE_URL =
             "https://bjfccfveekebgbkqreyp.supabase.co";
 
         const SUPABASE_KEY =
             "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+
 
         const supabaseClient =
             window.supabase.createClient(
@@ -77,128 +123,208 @@
             );
 
 
-        const urlParams =
-            new URLSearchParams(window.location.search);
+        /* ==========================================
+           GET SUBJECT
+           ========================================== */
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
 
         const subject =
-            urlParams.get("name");
+            params.get("name");
 
 
-        document.getElementById("subjectTitle").textContent =
-            subject
-                ? "Subject: " + subject
-                : "Subject not selected";
+        const subjectTitle =
+            document.getElementById("subjectTitle");
 
 
-        function showAddForm() {
+        if (subject) {
 
-            document.getElementById("addForm").style.display =
-                "block";
+            subjectTitle.textContent =
+                subject + " — Notes";
+
+        } else {
+
+            subjectTitle.textContent =
+                "Notes";
 
         }
 
 
+        /* ==========================================
+           BACK LINK
+           ========================================== */
+
+        const backLink =
+            document.getElementById("backLink");
+
+
+        if (subject) {
+
+            backLink.href =
+                "subject-details.html?name=" +
+                encodeURIComponent(subject);
+
+        } else {
+
+            backLink.href =
+                "subjects.html";
+
+        }
+
+
+        /* ==========================================
+           ADD NOTE
+           ========================================== */
+
         async function addNote() {
-
-            const title =
-                document.getElementById("noteTitle").value.trim();
-
-            const details =
-                document.getElementById("noteDetails").value.trim();
-
-            const file =
-                document.getElementById("noteFile").files[0];
-
 
             if (!subject) {
 
-                alert("Subject not selected.");
-
-                return;
-            }
-
-
-            if (title === "" || details === "") {
-
-                alert("Please fill in all fields.");
-
-                return;
-            }
-
-
-            let fileUrl = "";
-
-
-            if (file) {
-
-                const fileName =
-                    Date.now() + "_" + file.name;
-
-
-                const { error: uploadError } =
-                    await supabaseClient
-                        .storage
-                        .from("notes-files")
-                        .upload(fileName, file);
-
-
-                if (uploadError) {
-
-                    alert(
-                        "File upload failed: " +
-                        uploadError.message
-                    );
-
-                    return;
-                }
-
-
-                const { data: publicUrlData } =
-                    supabaseClient
-                        .storage
-                        .from("notes-files")
-                        .getPublicUrl(fileName);
-
-
-                fileUrl =
-                    publicUrlData.publicUrl;
-            }
-            const { error } =
-                await supabaseClient
-                    .from("notes")
-                    .insert([
-                        {
-                            subject: subject,
-                            title: title,
-                            details: details,
-                            file_url: fileUrl
-                        }
-                    ]);
-
-
-            if (error) {
-
                 alert(
-                    "Could not save note: " +
-                    error.message
+                    "No subject was selected."
                 );
 
                 return;
             }
 
 
-            alert("Note added successfully!");
+            const title =
+                document
+                    .getElementById("title")
+                    .value
+                    .trim();
 
 
-            document.getElementById("noteTitle").value = "";
+            const details =
+                document
+                    .getElementById("details")
+                    .value
+                    .trim();
 
-            document.getElementById("noteDetails").value = "";
 
-            document.getElementById("noteFile").value = "";
+            const fileInput =
+                document.getElementById("file");
 
 
-            document.getElementById("addForm").style.display =
-                "none";
+            const file =
+                fileInput.files[0];
+
+
+            if (!title || !details || !file) {
+
+                alert(
+                    "Please fill in all fields and select a file."
+                );
+
+                return;
+            }
+
+
+            /* ------------------------------------------
+               Upload file
+               ------------------------------------------ */
+
+            const fileName =
+                Date.now() +
+                "_" +
+                file.name;
+
+
+            const {
+                error: uploadError
+            } = await supabaseClient
+                .storage
+                .from("notes-files")
+                .upload(
+                    fileName,
+                    file
+                );
+
+
+            if (uploadError) {
+
+                console.error(
+                    "File upload error:",
+                    uploadError
+                );
+
+                alert(
+                    "Unable to upload the note file."
+                );
+
+                return;
+            }
+
+
+            /* ------------------------------------------
+               Get public URL
+               ------------------------------------------ */
+
+            const {
+                data: publicData
+            } = supabaseClient
+                .storage
+                .from("notes-files")
+                .getPublicUrl(fileName);
+
+
+            const fileUrl =
+                publicData.publicUrl;
+
+
+            /* ------------------------------------------
+               Save note
+               ------------------------------------------ */
+
+            const {
+                error: insertError
+            } = await supabaseClient
+                .from("notes")
+                .insert([
+                    {
+                        subject: subject,
+                        title: title,
+                        details: details,
+                        file_url: fileUrl
+                    }
+                ]);
+
+
+            if (insertError) {
+
+                console.error(
+                    "Database error:",
+                    insertError
+                );
+
+                alert(
+                    "File uploaded, but the note could not be saved."
+                );
+
+                return;
+            }
+
+
+            alert(
+                "Note added successfully."
+            );
+
+
+            document.getElementById(
+                "title"
+            ).value = "";
+
+
+            document.getElementById(
+                "details"
+            ).value = "";
+
+
+            fileInput.value = "";
 
 
             loadNotes();
@@ -206,86 +332,135 @@
         }
 
 
+        /* ==========================================
+           LOAD NOTES
+           ========================================== */
+
         async function loadNotes() {
 
-            const { data, error } =
-                await supabaseClient
-                    .from("notes")
-                    .select("*")
-                    .eq("subject", subject)
-                    .order("created_at", { ascending: false });
+            if (!subject) {
+
+                document.getElementById(
+                    "notesList"
+                ).innerHTML = `
+                    <div class="empty-message">
+                        No subject selected.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+                .from("notes")
+                .select("*")
+                .eq("subject", subject)
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
 
 
             if (error) {
 
-                document.getElementById("notesList").innerHTML =
-                    "<p>Could not load notes: " +
-                    error.message +
-                    "</p>";
+                console.error(
+                    "Error loading notes:",
+                    error
+                );
+
+                document.getElementById(
+                    "notesList"
+                ).innerHTML = `
+                    <div class="empty-message">
+                        Unable to load notes.
+                    </div>
+                `;
 
                 return;
             }
 
 
             const notesList =
-                document.getElementById("notesList");
+                document.getElementById(
+                    "notesList"
+                );
+
+
+            notesList.innerHTML = "";
 
 
             if (!data || data.length === 0) {
 
-                notesList.innerHTML =
-                    "<p>No notes uploaded yet.</p>";
+                notesList.innerHTML = `
+                    <div class="empty-message">
+                        No notes available for this subject yet.
+                    </div>
+                `;
 
                 return;
             }
 
 
-           notesList.innerHTML =
-    '<div style="display: flex; align-items: center; gap: 30px; font-weight: bold; margin-bottom: 10px;">' +
-        '<span style="width: 220px;">Title</span>' +
-        '<span style="width: 300px;">Description</span>' +
-        '<span style="width: 180px;">Notes</span>' +
-    '</div>';
+            data.forEach(note => {
 
-            data.forEach(function (note) {
-
-                const item =
+                const card =
                     document.createElement("div");
 
+                card.className =
+                    "resource-card";
 
-                item.style.marginBottom = "6px";
-                item.style.padding = "6px 10px";
-                item.style.border = "1px solid #ddd";
-                item.style.borderRadius = "12px";
-                item.style.display = "flex";
-                item.style.alignItems = "center";
-                item.style.justifyContent = "flex-start";
-                item.style.gap = "30px";
 
-item.innerHTML =
+                const title =
+                    document.createElement("h3");
 
-    '<span style="width: 220px;">' +
-    note.title +
-    '</span>' +
+                title.textContent =
+                    note.title;
 
-    '<span style="width: 300px;">' +
-    note.details +
-    '</span>' +
 
-    (
-        note.file_url
-            ? '<span style="width: 180px;"><a href="' +
-              note.file_url +
-              '" target="_blank">View Notes</a></span>'
-            : '<span style="width: 180px;">No file attached.</span>'
-    );
+                const details =
+                    document.createElement("p");
 
-                notesList.appendChild(item);
+                details.textContent =
+                    note.details || "No details provided.";
+
+
+                const fileLink =
+                    document.createElement("a");
+
+                fileLink.href =
+                    note.file_url;
+
+                fileLink.target =
+                    "_blank";
+
+                fileLink.rel =
+                    "noopener noreferrer";
+
+                fileLink.textContent =
+                    "Open Note";
+
+
+                card.appendChild(title);
+                card.appendChild(details);
+                card.appendChild(fileLink);
+
+
+                notesList.appendChild(card);
 
             });
 
         }
 
+
+        /* ==========================================
+           INITIAL LOAD
+           ========================================== */
 
         loadNotes();
 
