@@ -61,13 +61,13 @@
             <p id="topicCount">0</p>
         </div>
 
-       <div class="card">
-    <h2>📊 Overall Progress</h2>
-    <p id="overallProgress">0%</p>
-</div>
+        <div class="card" onclick="window.location.href='topics.html'" style="cursor:pointer;">
+          <h2>📊 Overall Progress</h2>
+          <p id="overallProgress">0%</p>
+        </div>
     </div>
 
-</div>
+  </div>
 <script>
     // Load subjects from localStorage
     let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
