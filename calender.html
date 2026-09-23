@@ -7,53 +7,24 @@
     <title>Exam Calendar - Student Semester Command Center</title>
 
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 
     <header>
-        <h1>Exam Calendar</h1>
-        <p>Keep track of your upcoming semester exams.</p>
+        <h1>📅 College Calendar</h1>
+        <p>Official college events, exams, holidays and important dates.</p>
     </header>
 
     <main>
 
         <section class="calendar-container">
 
-            <h2>Upcoming Exams</h2>
+            <h2>🏫 Official College Events</h2>
 
-            <button id="addExamBtn" type="button">
-                + Add Exam
-            </button>
-
-            <div id="examForm" style="display: none;">
-
-                <h3>Add an Exam</h3>
-
-                <label for="examSubject">Subject</label>
-
-                <input
-                    type="text"
-                    id="examSubject"
-                    placeholder="Enter subject name"
-                >
-
-                <label for="examDate">Exam Date</label>
-
-                <input
-                    type="date"
-                    id="examDate"
-                >
-
-                <button id="saveExamBtn" type="button">
-                    Save Exam
-                </button>
-
-                <button id="cancelExamBtn" type="button">
-                    Cancel
-                </button>
-
-            </div>
+            
+                    
 
             <div id="examList">
                 <p>No exams added yet.</p>
@@ -64,95 +35,161 @@
     </main>
 
     <script>
+const SUPABASE_URL = "https://bjfccfveekebgbkqreyp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+const examList = document.getElementById("examList");
 
 
-    const addExamBtn = document.getElementById("addExamBtn");
-    const examForm = document.getElementById("examForm");
-    const saveExamBtn = document.getElementById("saveExamBtn");
-    const cancelExamBtn = document.getElementById("cancelExamBtn");
+// Load official college events
+async function loadCollegeEvents() {
 
-    const examSubject = document.getElementById("examSubject");
-    const examDate = document.getElementById("examDate");
-    const examList = document.getElementById("examList");
+    const { data, error } = await supabaseClient
+        .from("college_events")
+        .select("*")
+        .order("event_date", { ascending: true });
 
-    let exams = JSON.parse(localStorage.getItem("studentExams")) || [];
-
-    // Open the Add Exam form
-    addExamBtn.addEventListener("click", function () {
-        examForm.style.display = "block";
-    });
-
-    // Close the Add Exam form
-    cancelExamBtn.addEventListener("click", function () {
-        examForm.style.display = "none";
-    });
-
-    // Save a new exam
-    saveExamBtn.addEventListener("click", function () {
-
-        const subject = examSubject.value.trim();
-        const date = examDate.value;
-
-        if (subject === "" || date === "") {
-            alert("Please enter the subject and exam date.");
-            return;
-        }
-
-        const exam = {
-            subject: subject,
-            date: date
-        };
-
-        exams.push(exam);
-
-        localStorage.setItem("studentExams", JSON.stringify(exams));
-
-        displayExams();
-
-        examSubject.value = "";
-        examDate.value = "";
-
-        examForm.style.display = "none";
-    });
-
-    // Display exams
-    function displayExams() {
-
-        if (exams.length === 0) {
-            examList.innerHTML = "<p>No exams added yet.</p>";
-            return;
-        }
-
-        examList.innerHTML = "";
-
-        exams.forEach(function (exam, index) {
-
-            const examItem = document.createElement("div");
-
-examItem.className = "exam-item";
-
-examItem.innerHTML =
-    '<div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px;">' +
-        '<div>' +
-            '<strong style="font-size: 20px;">' + exam.subject + '</strong>' +
-            '<p style="margin: 8px 0 0 0;">Exam Date: ' + exam.date + '</p>' +
-        '</div>' +
-        '<button onclick="deleteExam(' + index + ')">Delete</button>' +
-    '</div>';
-
-examList.appendChild(examItem);
-        });
+    if (error) {
+        console.error("Error loading college events:", error);
+        examList.innerHTML =
+            "<p>Could not load college events.</p>";
+        return;
     }
 
-    // Delete an exam
-    function deleteExam(index) {
-        exams.splice(index, 1);
+    displayCollegeEvents(data || []);
+}
 
-        localStorage.setItem("studentExams", JSON.stringify(exams));
-        
-        displayExams();
+
+// Calculate days remaining
+function getDaysRemaining(eventDate) {
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    const event = new Date(eventDate + "T00:00:00");
+
+    const difference =
+        event.getTime() - today.getTime();
+
+    return Math.ceil(
+        difference / (1000 * 60 * 60 * 24)
+    );
+}
+
+
+// Format the date nicely
+function formatDate(dateString) {
+
+    const date = new Date(dateString + "T00:00:00");
+
+    return date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    });
+}
+
+
+// Display college events
+function displayCollegeEvents(events) {
+
+    if (events.length === 0) {
+
+        examList.innerHTML =
+            "<p>No college events have been added yet.</p>";
+
+        return;
     }
 
+    examList.innerHTML = "";
+
+    events.forEach(function (event) {
+
+        const daysLeft =
+            getDaysRemaining(event.event_date);
+
+        let countdownText = "";
+
+        if (daysLeft > 1) {
+            countdownText = daysLeft + " days left";
+        }
+        else if (daysLeft === 1) {
+            countdownText = "1 day left";
+        }
+        else if (daysLeft === 0) {
+            countdownText = "🎉 TODAY";
+        }
+        else if (daysLeft === -1) {
+            countdownText = "Event was yesterday";
+        }
+        else {
+            countdownText =
+                "Event completed";
+        }
+
+        const eventItem =
+            document.createElement("div");
+
+        eventItem.className = "exam-item";
+
+        eventItem.innerHTML = `
+            <div style="
+                padding: 15px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+            ">
+
+                <strong style="font-size: 20px;">
+                    🏫 ${escapeHTML(event.title)}
+                </strong>
+
+                <p>
+                    📅 ${formatDate(event.event_date)}
+                </p>
+
+                <p>
+                    🎯 ${escapeHTML(event.event_type)}
+                </p>
+
+                <p>
+                    ⏳ <strong>${countdownText}</strong>
+                </p>
+
+                ${
+                    event.description
+                    ? `<p>${escapeHTML(event.description)}</p>`
+                    : ""
+                }
+
+            </div>
+        `;
+
+        examList.appendChild(eventItem);
+
+    });
+}
+
+
+// Protect text displayed on the page
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// Load events when page opens
+loadCollegeEvents();
 </script>
 
 

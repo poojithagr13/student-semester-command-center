@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .todo-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .add-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #taskInput {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        #addTaskBtn {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #333;
+            color: white;
+        }
+
+        #taskList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .task span {
+            flex: 1;
+        }
+
+        .completed span {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .delete-btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #333;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 25px;
+        }
+
+        .todo-box h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        #emptyMessage {
+            text-align: center;
+            color: #777;
+            padding: 20px;
+        }
+
+        .task {
+            background: #f8f9fc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .task span {
+            font-size: 16px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <div class="container">
+    
+        <a href="index.html" class="back-btn">← Back to Dashboard</a>
+    
+        <h1>📋 To-Do List</h1>
+    
+        <p class="subtitle">Organize your tasks and study goals</p>
+    
+        <div class="todo-box">
+    
+            <div class="add-area">
+                <input
+                    type="text"
+                    id="taskInput"
+                    placeholder="Enter a task..."
+                >
+    
+                <button id="addTaskBtn">Add Task</button>
+            </div>
+    
+            <h2>Pending Tasks</h2>
+    
+            <ul id="taskList"></ul>
+    
+            <p id="emptyMessage">No pending tasks 🎉</p>
+    
+        </div>
+    
+    </div>
+    
+    <script>
+        const SUPABASE_URL = "https://bjfccfveekebgbkqreyp.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+
+        const supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+        const taskInput = document.getElementById("taskInput");
+        const addTaskBtn = document.getElementById("addTaskBtn");
+        const taskList = document.getElementById("taskList");
+        const emptyMessage = document.getElementById("emptyMessage");
+
+        let tasks = [];
+
+        // Check which user is logged in
+        async function getCurrentUser() {
+
+            const { data, error } = await supabaseClient.auth.getUser();
+
+            if (error || !data.user) {
+                window.location.href = "login.html";
+                return null;
+            }
+
+            return data.user;
+        }
+
+
+        // Load this user's tasks from Supabase
+        async function loadTasks() {
+
+            const user = await getCurrentUser();
+
+            if (!user) {
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from("todos")
+                .select("*")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: true });
+
+            if (error) {
+                console.error("Error loading tasks:", error);
+                return;
+            }
+
+            tasks = data || [];
+
+             displayTasks();
+        }
+
+
+        // Display tasks
+        function displayTasks() {
+
+            taskList.innerHTML = "";
+
+            const pendingTasks = tasks.filter(task => !task.completed);
+
+            if (pendingTasks.length === 0) {
+                emptyMessage.style.display = "block";
+            }
+            else {
+                emptyMessage.style.display = "none";
+            }
+
+            tasks.forEach((task) => {
+
+                if (task.completed) {
+                    return;
+                }
+
+            const li = document.createElement("li");
+            li.className = "task";
+
+            li.innerHTML = `
+                    <input
+                        type="checkbox"
+                        onchange="toggleTask('${task.id}', ${task.completed})"
+                    >
+
+                    <span>${task.task}</span>
+
+                    <button
+                        class="delete-btn"
+                        onclick="deleteTask('${task.id}')"
+                    >
+                        🗑️
+                    </button>
+                `;
+
+                taskList.appendChild(li);
+            });
+        }
+
+
+            // Add a new task
+        async function addTask() {
+
+            const text = taskInput.value.trim();
+
+            if (text === "") {
+                return;
+            }
+
+            const user = await getCurrentUser();
+
+            if (!user) {
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from("todos")
+                .insert({
+                    user_id: user.id,
+                    task: text,
+                    completed: false
+                });
+
+            if (error) {
+                console.error("Error adding task:", error);
+                alert("Could not add task.");
+                return;
+            }
+
+            taskInput.value = "";
+
+            await loadTasks();
+        }
+
+
+        // Complete a task
+        async function toggleTask(id, currentStatus) {
+
+            const { error } = await supabaseClient
+                .from("todos")
+                .update({
+                    completed: !currentStatus
+                })
+                .eq("id", id);
+
+            if (error) {
+                console.error("Error updating task:", error);
+                return;
+            }
+
+            await loadTasks();
+        }
+
+
+        // Delete a task
+        async function deleteTask(id) {
+
+            const { error } = await supabaseClient
+                .from("todos")
+                .delete()
+                .eq("id", id);
+
+            if (error) {
+                console.error("Error deleting task:", error);
+             return;
+            }
+
+            await loadTasks();
+        }
+
+
+        // Add button
+        addTaskBtn.addEventListener("click", addTask);
+
+
+        // Press Enter to add
+        taskInput.addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter") {
+             addTask();
+            }
+
+        });
+
+
+        // Load tasks when page opens
+        loadTasks();
+    </script>
+    
+</body>
+</html>

@@ -5,106 +5,189 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Semester Command Center</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <script>
+    // Protect the page - redirect to login if not logged in
+    if (!localStorage.getItem('studentName')) {
+          window.location.href = 'login.html';
+        }
+  </script>
+      <div class="top-bar">
+        <div class="welcome-text">
+            Welcome, <strong id="userName"></strong>
+        </div>
+    
+        <button class="logout-btn" onclick="logout()">
+            Logout
+        </button>
+      </div>
+
     <script>
-  // Protect the page - redirect to login if not logged in
-  if (!localStorage.getItem('studentName')) {
-    window.location.href = 'login.html';
-  }
-</script>
-<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #1e3a8a; color: white;">
-  <div>
-    Welcome, <strong id="userName"></strong>
-  </div>
-  <button onclick="logout()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-    Logout
-  </button>
-</div>
+      // Show the user's name
+      document.getElementById('userName').textContent = localStorage.getItem('studentName') || 'Student';
 
-<script>
-  // Show the user's name
-  document.getElementById('userName').textContent = localStorage.getItem('studentName') || 'Student';
+      function logout() {
+        localStorage.removeItem('studentName');
+        localStorage.removeItem('studentPassword');
+        window.location.href = 'login.html';
+      }
+    </script>
 
-  function logout() {
-    localStorage.removeItem('studentName');
-    localStorage.removeItem('studentPassword');
-    window.location.href = 'login.html';
-  }
-</script>
+        <div class="dashboard">
 
-    <div class="dashboard">
-
-    <h1>Student Semester Command Center</h1>
-    <nav style="margin: 15px 0;">
-        <a href="topics.html" style="color: white; text-decoration: none; background: #2563eb; padding: 8px 16px; border-radius: 5px;">Go to Topics</a>
-    </nav>
-    <p>Welcome to your academic dashboard.</p>
+          <h1>Student Semester Command Center</h1>
+            <p>Welcome to your academic dashboard.</p>
 
     
-    <div class="cards">
-        <div class="card" onclick="window.location.href='subjects.html'" style="cursor: pointer;">
-            <h2>📚 Subjects</h2>
-            <p id="subjectCount">0</p>
-            <button onclick="event.stopPropagation(); window.location.href='subjects.html'">
-                Manage Subjects
-            </button>
-        </div>
+        <div class="cards">
+            <div class="card" onclick="window.location.href='subjects.html'" >
+                <h2>📚 Subjects</h2>
+                <p id="subjectCount">0</p>
+                <button onclick="event.stopPropagation(); window.location.href='subjects.html'">
+                    Manage Subjects
+                </button>
+            </div>
                
-        <div class="card">
-            <h2>📖 Topics</h2>
-            <p id="topicCount">0</p>
+            <div class="card" onclick="window.location.href='calendar.html'" >
+              <h2>📅 Exam Calendar</h2>
+              <p>View your exam schedule</p>
+            </div>
+
+            <div class="card" onclick="window.location.href='todo.html'">
+              <h2>📋 To-Do List</h2>
+              <p id="todoCount">0 tasks remaining</p>
+            </div>
+
+            <div class="card" onclick="window.location.href='topics.html'" >
+              <h2>📊 Overall Progress</h2>
+              <p id="overallProgress">0%</p>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>📝 Questions</h2>
-            <p id="topicCount">0</p>
         </div>
+    <script>
+      const SUPABASE_URL = "https://bjfccfveekebgbkqreyp.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
 
-        <div class="card" onclick="window.location.href='topics.html'" style="cursor:pointer;">
-          <h2>📊 Overall Progress</h2>
-          <p id="overallProgress">0%</p>
-        </div>
-    </div>
+      const supabaseClient = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+      );
 
-  </div>
-<script>
-    // Load subjects from localStorage
-    let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
-    let topics = JSON.parse(localStorage.getItem("studentTopics")) || [];
+        // Load subjects from localStorage
+      let subjects = JSON.parse(localStorage.getItem("studentSubjects")) || [];
+      let topics = JSON.parse(localStorage.getItem("studentTopics")) || [];
 
-    // Update the count on the page
-    function updateSubjectCount() {
+      // Update the count on the page
+      function updateSubjectCount() {
         document.getElementById("subjectCount").textContent = subjects.length;
         document.getElementById("topicCount").textContent = topics.length;
-    }
+      }
 
-    // Add a new subject
-    function addSubject() {
-        const subject = prompt("Enter your subject name:");
+      // Add a new subject
+      function addSubject() {
+          const subject = prompt("Enter your subject name:");
 
-        if (subject && subject.trim() !== "") {
-            // Avoid adding empty or duplicate names
+          if (subject && subject.trim() !== "") {
+              // Avoid adding empty or duplicate names
             const name = subject.trim();
 
             if (subjects.includes(name)) {
-                alert("This subject already exists!");
-                return;
+              alert("This subject already exists!");
+              return;
             }
 
             subjects.push(name);
             localStorage.setItem("studentSubjects", JSON.stringify(subjects));
             updateSubjectCount();
+          }
+      }
+
+      // Show the correct count when page loads
+      updateSubjectCount();
+      
+      async function updateTodoCount() {
+
+        const { data: userData, error: userError } =
+          await supabaseClient.auth.getUser();
+
+        if (userError || !userData.user) {
+          return;
         }
-    }
 
-    // Show the correct count when page loads
-    updateSubjectCount();
+        const userId = userData.user.id;
+
+        const { data: tasks, error } = await supabaseClient
+            .from("todos")
+            .select("completed")
+            .eq("user_id", userId)
+            .eq("completed", false);
+
+        if (error) {
+            console.error("Error loading todo count:", error);
+            return;
+        }
+
+        const remainingTasks = tasks.length;
+
+        const todoCount = document.getElementById("todoCount");
+
+        if (remainingTasks === 1) {
+            todoCount.textContent = "1 task remaining";
+        } else {
+            todoCount.textContent = remainingTasks + " tasks remaining";
+        }
+      }
+      updateTodoCount();
+      async function updateOverallProgress() {
+
+        const { data: userData, error: userError } =
+          await supabaseClient.auth.getUser();
+
+        if (userError || !userData.user) {
+           return;
+        }
+
+        const userId = userData.user.id;
+
+        const { data: topics, error } = await supabaseClient
+            .from("topics")
+            .select("status")
+            .eq("user_id", userId);
+
+        if (error) {
+          console.error("Error loading progress:", error);
+          return;
+        }
+
+        const totalTopics = topics.length;
+
+        let completedTopics = 0;
+
+        topics.forEach(topic => {
+          if (topic.status === "Completed") {
+            completedTopics++;
+          }
+        });
+
+        let progress = 0;
+
+        if (totalTopics > 0) {
+          progress = Math.round(
+            (completedTopics / totalTopics) * 100
+          );
+        }
+
+        const overallProgress =
+          document.getElementById("overallProgress");
+
+        overallProgress.textContent = progress + "%";
+      }
+
+      updateOverallProgress();
     </script>
-
-
     
-
-
 </body>
 </html>
