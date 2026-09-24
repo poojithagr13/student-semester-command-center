@@ -1,460 +1,1225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>College Calendar | Student Semester Command Center</title>
+<title>College Calendar | Student Semester Command Center</title>
 
-    <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        /* =====================================================
-           CALENDAR PAGE ADDITIONAL STYLES
-           ===================================================== */
+<style>
+/* =========================================================
+   CALENDAR PAGE
+   Final responsive version
+   ========================================================= */
 
-        .calendar-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+:root {
+    --primary-blue: #003366;
+    --secondary-blue: #005599;
+    --accent-blue: #0066CC;
+    --background: #F5F7FA;
+    --surface: #FFFFFF;
+    --text-primary: #1A1A1A;
+    --text-secondary: #4A5568;
+    --border: #E2E8F0;
+    --success: #2F855A;
+    --warning: #D69E2E;
+    --error: #C53030;
+    --info: #2B6CB0;
+}
 
-        .calendar-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 18px;
-            margin-top: 16px;
-            color: #4A5568;
-            font-size: 0.85rem;
-        }
+/* ---------- PAGE ---------- */
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-        }
+.calendar-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
 
-        .legend-dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-        }
+.calendar-page h1 {
+    margin-bottom: 6px;
+    color: var(--primary-blue);
+}
 
-        .legend-official {
-            background: #003366;
-        }
+.calendar-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
 
-        .legend-personal {
-            background: #2F855A;
-        }
+/* ---------- TOOLBAR ---------- */
 
-        .legend-completed {
-            background: #A0AEC0;
-        }
+.calendar-toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
 
-        .calendar-event-item {
-            cursor: pointer;
-        }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
 
-        .calendar-event-item:hover {
-            background: #EDF2F7;
-        }
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
 
-        /* Modal */
+.calendar-navigation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        .calendar-modal-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: rgba(15, 23, 42, 0.55);
-        }
+.calendar-navigation button,
+.calendar-action-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--primary-blue);
 
-        .calendar-modal-overlay.active {
-            display: flex;
-        }
+    padding: 9px 14px;
+    border-radius: 8px;
 
-        .calendar-modal {
-            width: 100%;
-            max-width: 520px;
-            max-height: 90vh;
-            overflow-y: auto;
-            background: #FFFFFF;
-            border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-        }
+    font-size: 14px;
+    font-weight: 600;
 
-        .calendar-modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            padding: 20px 22px;
-            border-bottom: 1px solid #E2E8F0;
-        }
+    cursor: pointer;
+    transition: 0.2s ease;
+}
 
-        .calendar-modal-header h2 {
-            margin: 0;
-            color: #003366;
-            font-size: 1.2rem;
-        }
+.calendar-navigation button:hover,
+.calendar-action-btn:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: #F7FAFC;
+}
 
-        .calendar-modal-close {
-            border: none;
-            background: transparent;
-            color: #4A5568;
-            font-size: 1.5rem;
-            cursor: pointer;
-            line-height: 1;
-        }
+.calendar-navigation .today-btn {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+}
 
-        .calendar-modal-body {
-            padding: 22px;
-        }
+.calendar-navigation .today-btn:hover {
+    background: var(--secondary-blue);
+    color: white;
+}
 
-        .calendar-modal-footer {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 16px 22px 22px;
-            border-top: 1px solid #E2E8F0;
-        }
+.month-title {
+    min-width: 180px;
+    text-align: center;
+    color: var(--primary-blue);
+    font-size: 20px;
+    font-weight: 700;
+}
 
-        .event-detail-row {
-            margin-bottom: 16px;
-        }
+.calendar-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
-        .event-detail-label {
-            display: block;
-            margin-bottom: 4px;
-            color: #4A5568;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
+.calendar-action-btn.primary {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+}
 
-        .event-detail-value {
-            color: #1A1A1A;
-            font-size: 0.95rem;
-        }
+.calendar-action-btn.primary:hover {
+    background: var(--secondary-blue);
+    color: white;
+}
 
-        .event-countdown-box {
-            padding: 12px 14px;
-            border-radius: 8px;
-            background: #F5F7FA;
-            color: #003366;
-            font-weight: 700;
-        }
+/* ---------- LEGEND ---------- */
 
-        .calendar-form-group {
-            margin-bottom: 16px;
-        }
+.calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
 
-        .calendar-form-group label {
-            display: block;
-            margin-bottom: 6px;
-            color: #1A1A1A;
-            font-size: 0.88rem;
-            font-weight: 600;
-        }
+    margin-bottom: 16px;
 
-        .calendar-form-group input,
-        .calendar-form-group select,
-        .calendar-form-group textarea {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 10px 12px;
-            border: 1px solid #E2E8F0;
-            border-radius: 7px;
-            background: #FFFFFF;
-            color: #1A1A1A;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
+    color: var(--text-secondary);
+    font-size: 13px;
+}
 
-        .calendar-form-group textarea {
-            resize: vertical;
-            min-height: 90px;
-        }
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
 
-        .calendar-form-group input:focus,
-        .calendar-form-group select:focus,
-        .calendar-form-group textarea:focus {
-            outline: none;
-            border-color: #0066CC;
-            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
-        }
+.legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
 
-        .calendar-message {
-            margin-top: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
+.legend-dot.official {
+    background: var(--accent-blue);
+}
 
-        .calendar-message.success {
-            color: #2F855A;
-        }
+.legend-dot.personal {
+    background: var(--success);
+}
 
-        .calendar-message.error {
-            color: #C53030;
-        }
+.legend-dot.completed {
+    background: #A0AEC0;
+}
 
-        .calendar-event-completed {
-            opacity: 0.55;
-        }
+/* ---------- CALENDAR CARD ---------- */
 
-        .calendar-event-completed .calendar-event-title {
-            text-decoration: line-through;
-        }
+.calendar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
 
-        .calendar-event-completed .calendar-event-dot {
-            background: #A0AEC0 !important;
-        }
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+}
 
-        .personal-event-label {
-            display: inline-block;
-            margin-left: 6px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #E6FFFA;
-            color: #2F855A;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
+/* ---------- WEEK DAYS ---------- */
 
-        @media (max-width: 600px) {
-            .calendar-modal-overlay {
-                padding: 10px;
-            }
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
 
-            .calendar-modal-header {
-                padding: 16px;
-            }
+    background: #F8FAFC;
+    border-bottom: 1px solid var(--border);
+}
 
-            .calendar-modal-body {
-                padding: 16px;
-            }
+.calendar-weekday {
+    min-width: 0;
 
-            .calendar-modal-footer {
-                padding: 14px 16px 16px;
-            }
+    padding: 12px 6px;
 
-            .calendar-actions {
-                flex-direction: column;
-            }
+    text-align: center;
 
-            .calendar-actions .btn {
-                width: 100%;
-            }
-        }
-    </style>
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+
+    border-right: 1px solid var(--border);
+}
+
+.calendar-weekday:last-child {
+    border-right: none;
+}
+
+/* ---------- CALENDAR GRID ---------- */
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+/*
+   Square cells:
+   aspect-ratio makes each date cell square.
+*/
+
+.calendar-day {
+    min-width: 0;
+    aspect-ratio: 1 / 1;
+
+    padding: 7px;
+
+    background: var(--surface);
+
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+
+    position: relative;
+
+    overflow: hidden;
+
+    transition: background 0.15s ease;
+}
+
+.calendar-day:nth-child(7n) {
+    border-right: none;
+}
+
+.calendar-day:hover {
+    background: #FAFCFF;
+}
+
+.calendar-day.other-month {
+    background: #FAFBFC;
+}
+
+.calendar-day.other-month .day-number {
+    color: #A0AEC0;
+}
+
+.calendar-day.today {
+    background: #F0F7FF;
+}
+
+.calendar-day.today .day-number {
+    background: var(--accent-blue);
+    color: white;
+}
+
+/* ---------- DAY NUMBER ---------- */
+
+.day-number {
+    width: 28px;
+    height: 28px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--text-primary);
+
+    font-size: 13px;
+    font-weight: 700;
+
+    margin-bottom: 4px;
+}
+
+/* ---------- EVENTS INSIDE CELLS ---------- */
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    max-height: calc(100% - 34px);
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: thin;
+}
+
+.calendar-event-item {
+    width: 100%;
+
+    border: none;
+    border-radius: 5px;
+
+    padding: 4px 5px;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    font-family: inherit;
+    font-size: 11px;
+    line-height: 1.25;
+
+    overflow: hidden;
+
+    background: #EBF4FF;
+    color: var(--primary-blue);
+
+    border-left: 3px solid var(--accent-blue);
+
+    transition: 0.15s ease;
+}
+
+.calendar-event-item:hover {
+    background: #DDEEFF;
+}
+
+.calendar-event-item.personal {
+    background: #EEF8F3;
+    color: #276749;
+    border-left-color: var(--success);
+}
+
+.calendar-event-item.completed {
+    opacity: 0.55;
+}
+
+.calendar-event-item.completed .event-title {
+    text-decoration: line-through;
+}
+
+.event-time {
+    display: block;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    margin-bottom: 2px;
+
+    opacity: 0.8;
+}
+
+.event-title {
+    display: block;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    font-weight: 700;
+}
+
+.more-events {
+    font-size: 10px;
+    color: var(--text-secondary);
+    padding: 2px 4px;
+}
+
+/* ---------- UPCOMING EVENTS ---------- */
+
+.upcoming-section {
+    margin-top: 24px;
+}
+
+.upcoming-section h2 {
+    color: var(--primary-blue);
+    margin-bottom: 12px;
+}
+
+.upcoming-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.upcoming-event {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    padding: 14px;
+
+    display: flex;
+    gap: 12px;
+
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.03);
+}
+
+.upcoming-date {
+    min-width: 65px;
+
+    color: var(--primary-blue);
+
+    font-weight: 700;
+}
+
+.upcoming-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.upcoming-title {
+    color: var(--text-primary);
+    font-weight: 700;
+
+    margin-bottom: 4px;
+}
+
+.upcoming-meta {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.upcoming-countdown {
+    margin-top: 5px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    color: var(--accent-blue);
+}
+
+.upcoming-countdown.today {
+    color: var(--error);
+}
+
+/* ---------- EMPTY STATE ---------- */
+
+.empty-calendar {
+    padding: 35px 20px;
+
+    text-align: center;
+
+    color: var(--text-secondary);
+}
+
+/* ---------- MODAL ---------- */
+
+.modal-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 18px;
+
+    z-index: 1000;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: var(--surface);
+
+    border-radius: 14px;
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+
+    padding: 22px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--primary-blue);
+}
+
+.modal-close {
+    width: 34px;
+    height: 34px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: white;
+
+    color: var(--text-secondary);
+
+    font-size: 20px;
+
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: var(--error);
+    border-color: var(--error);
+}
+
+/* ---------- FORM ---------- */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    padding: 10px 11px;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    color: var(--text-primary);
+    background: white;
+
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
+}
+
+.form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    margin-top: 20px;
+
+    flex-wrap: wrap;
+}
+
+.modal-btn {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    padding: 10px 15px;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    background: white;
+    color: var(--text-primary);
+}
+
+.modal-btn.primary {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+}
+
+.modal-btn.primary:hover {
+    background: var(--secondary-blue);
+}
+
+.modal-btn.danger {
+    color: var(--error);
+    border-color: #F0B6B6;
+}
+
+.modal-btn.danger:hover {
+    background: #FFF5F5;
+}
+
+.modal-btn.success {
+    color: var(--success);
+    border-color: #A7D8BE;
+}
+
+.modal-btn.success:hover {
+    background: #F2FBF6;
+}
+
+/* ---------- EVENT DETAILS ---------- */
+
+.event-detail {
+    margin-bottom: 14px;
+}
+
+.event-detail-label {
+    color: var(--text-secondary);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    margin-bottom: 3px;
+}
+
+.event-detail-value {
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.event-badge {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    background: #EBF4FF;
+    color: var(--accent-blue);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.event-badge.personal {
+    background: #EEF8F3;
+    color: var(--success);
+}
+
+.completion-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    background: #FAFCFF;
+
+    margin-top: 14px;
+}
+
+.completion-row input {
+    width: 17px;
+    height: 17px;
+}
+
+/* ---------- STATUS ---------- */
+
+.status-message {
+    margin-bottom: 15px;
+
+    padding: 10px 12px;
+
+    border-radius: 8px;
+
+    display: none;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-message.show {
+    display: block;
+}
+
+.status-message.success {
+    background: #EEF8F3;
+    color: var(--success);
+}
+
+.status-message.error {
+    background: #FFF5F5;
+    color: var(--error);
+}
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 700px) {
+
+    .calendar-page {
+        padding: 14px 8px;
+    }
+
+    .calendar-page h1 {
+        font-size: 24px;
+    }
+
+    .calendar-subtitle {
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .calendar-toolbar {
+        padding: 10px;
+
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .calendar-navigation {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .calendar-navigation button {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .month-title {
+        min-width: 0;
+        flex: 1;
+
+        font-size: 16px;
+    }
+
+    .calendar-actions {
+        width: 100%;
+    }
+
+    .calendar-action-btn {
+        flex: 1;
+        padding: 9px 8px;
+        font-size: 12px;
+    }
+
+    .calendar-legend {
+        gap: 10px;
+        font-size: 11px;
+    }
+
+    .calendar-weekday {
+        padding: 8px 2px;
+        font-size: 9px;
+    }
+
+    .calendar-day {
+        padding: 4px;
+
+        /*
+          Keep the cells square on phones.
+        */
+        aspect-ratio: 1 / 1;
+    }
+
+    .day-number {
+        width: 23px;
+        height: 23px;
+
+        font-size: 11px;
+
+        margin-bottom: 2px;
+    }
+
+    .day-events {
+        gap: 2px;
+        max-height: calc(100% - 27px);
+    }
+
+    .calendar-event-item {
+        padding: 3px;
+
+        border-left-width: 2px;
+
+        font-size: 8px;
+        line-height: 1.15;
+    }
+
+    .event-time {
+        font-size: 7px;
+        margin-bottom: 1px;
+    }
+
+    .event-title {
+        white-space: normal;
+
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+
+        overflow: hidden;
+    }
+
+    .more-events {
+        font-size: 8px;
+    }
+
+    .upcoming-list {
+        grid-template-columns: 1fr;
+    }
+
+    .upcoming-event {
+        padding: 11px;
+    }
+
+    .upcoming-date {
+        min-width: 55px;
+        font-size: 12px;
+    }
+
+    .upcoming-title {
+        font-size: 14px;
+    }
+
+    .upcoming-meta {
+        font-size: 12px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full {
+        grid-column: auto;
+    }
+
+    .modal {
+        padding: 17px;
+
+        max-height: 94vh;
+    }
+
+    .modal-header h2 {
+        font-size: 19px;
+    }
+}
+
+@media (max-width: 380px) {
+
+    .calendar-page {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .calendar-weekday {
+        font-size: 8px;
+    }
+
+    .calendar-day {
+        padding: 3px;
+    }
+
+    .day-number {
+        width: 21px;
+        height: 21px;
+
+        font-size: 10px;
+    }
+
+    .calendar-event-item {
+        font-size: 7px;
+    }
+
+    .event-time {
+        font-size: 6px;
+    }
+}
+</style>
 </head>
 
 <body>
 
-<div class="container">
+<main class="calendar-page">
 
-    <a href="index.html" class="back-link">← Back to Dashboard</a>
+    <a href="index.html" class="back-link">
+        ← Back to Dashboard
+    </a>
 
-    <div class="page-header">
-        <div>
-            <h1>College Calendar</h1>
-            <p class="page-subtitle">
-                Manage official college events and your personal schedule.
-            </p>
+    <h1>College Calendar</h1>
+
+    <p class="calendar-subtitle">
+        Official college events, exams, holidays and your personal academic schedule.
+    </p>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <!-- TOOLBAR -->
+    <section class="calendar-toolbar">
+
+        <div class="calendar-navigation">
+
+            <button type="button" id="previousMonth">
+                ←
+            </button>
+
+            <button type="button" id="todayButton" class="today-btn">
+                Today
+            </button>
+
+            <button type="button" id="nextMonth">
+                →
+            </button>
+
+            <div id="monthTitle" class="month-title">
+                Loading...
+            </div>
+
         </div>
+
+        <div class="calendar-actions">
+
+            <button
+                type="button"
+                id="addPersonalButton"
+                class="calendar-action-btn primary"
+            >
+                + Personal Event
+            </button>
+
+            <button
+                type="button"
+                id="addOfficialButton"
+                class="calendar-action-btn primary"
+                style="display:none;"
+            >
+                + Official Event
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- LEGEND -->
+    <div class="calendar-legend">
+
+        <div class="legend-item">
+            <span class="legend-dot official"></span>
+            Official
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-dot personal"></span>
+            Personal
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-dot completed"></span>
+            Completed
+        </div>
+
     </div>
 
-    <!-- =====================================================
-         ADMIN CONTROLS
-         ===================================================== -->
+    <!-- CALENDAR -->
+    <section class="calendar-card">
 
-    <section id="adminControls" class="card" style="display: none; margin-bottom: 20px;">
+        <div class="calendar-weekdays">
 
-        <div class="section-heading">
-            <div>
-                <h2>Admin Controls</h2>
-                <p>
-                    Official college events can only be managed by authorized administrators.
-                </p>
-            </div>
+            <div class="calendar-weekday">Sun</div>
+            <div class="calendar-weekday">Mon</div>
+            <div class="calendar-weekday">Tue</div>
+            <div class="calendar-weekday">Wed</div>
+            <div class="calendar-weekday">Thu</div>
+            <div class="calendar-weekday">Fri</div>
+            <div class="calendar-weekday">Sat</div>
+
         </div>
 
-        <div class="calendar-actions">
-            <button id="addOfficialEventButton" class="btn btn-primary">
-                + Add Official Event
-            </button>
+        <div id="calendarGrid" class="calendar-grid"></div>
+
+    </section>
+
+    <!-- UPCOMING -->
+    <section class="upcoming-section">
+
+        <h2>Upcoming Events</h2>
+
+        <div id="upcomingList" class="upcoming-list">
+            <div class="empty-calendar">
+                Loading upcoming events...
+            </div>
         </div>
 
     </section>
 
-
-    <!-- =====================================================
-         PERSONAL EVENT CONTROL
-         ===================================================== -->
-
-    <section class="card" style="margin-bottom: 20px;">
-
-        <div class="section-heading">
-            <div>
-                <h2>My Calendar</h2>
-                <p>
-                    Add your own private events, study plans, reminders, or activities.
-                </p>
-            </div>
-        </div>
-
-        <div class="calendar-actions">
-
-            <button id="addPersonalEventButton" class="btn btn-primary">
-                + Add Personal Event
-            </button>
-
-        </div>
-
-    </section>
+</main>
 
 
-    <!-- =====================================================
-         MONTH CALENDAR
-         ===================================================== -->
+<!-- =====================================================
+     EVENT FORM MODAL
+     ===================================================== -->
 
-    <section class="card calendar-card">
+<div id="eventFormOverlay" class="modal-overlay">
 
-        <div class="calendar-toolbar">
+    <div class="modal">
 
-            <div class="calendar-navigation">
+        <div class="modal-header">
 
-                <button id="previousMonth" class="btn btn-secondary">
-                    ←
-                </button>
-
-                <button id="todayButton" class="btn btn-secondary">
-                    Today
-                </button>
-
-                <button id="nextMonth" class="btn btn-secondary">
-                    →
-                </button>
-
-            </div>
-
-            <h2 id="calendarMonthYear">
-                Loading...
-            </h2>
-
-        </div>
-
-
-        <div class="calendar-wrapper">
-
-            <div class="calendar-weekdays">
-
-                <div>Sun</div>
-                <div>Mon</div>
-                <div>Tue</div>
-                <div>Wed</div>
-                <div>Thu</div>
-                <div>Fri</div>
-                <div>Sat</div>
-
-            </div>
-
-            <div id="calendarGrid" class="calendar-grid"></div>
-
-        </div>
-
-
-        <div class="calendar-legend">
-
-            <div class="legend-item">
-                <span class="legend-dot legend-official"></span>
-                Official College Event
-            </div>
-
-            <div class="legend-item">
-                <span class="legend-dot legend-personal"></span>
-                Personal Event
-            </div>
-
-            <div class="legend-item">
-                <span class="legend-dot legend-completed"></span>
-                Completed
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         UPCOMING EVENTS
-         ===================================================== -->
-
-    <section class="card">
-
-        <div class="section-heading">
-
-            <div>
-                <h2>Upcoming Events</h2>
-                <p>
-                    Your upcoming official and personal events.
-                </p>
-            </div>
-
-        </div>
-
-        <div id="upcomingEvents" class="calendar-list">
-
-            <p class="empty-message">
-                Loading events...
-            </p>
-
-        </div>
-
-    </section>
-
-</div>
-
-
-<!-- =========================================================
-     EVENT MODAL
-     ========================================================= -->
-
-<div id="calendarModalOverlay" class="calendar-modal-overlay">
-
-    <div class="calendar-modal">
-
-        <div class="calendar-modal-header">
-
-            <h2 id="modalTitle">
-                Event
+            <h2 id="eventFormTitle">
+                Add Personal Event
             </h2>
 
             <button
-                id="modalCloseButton"
-                class="calendar-modal-close"
                 type="button"
-                aria-label="Close">
+                class="modal-close"
+                id="closeEventForm"
+            >
                 ×
             </button>
 
         </div>
 
+        <form id="eventForm">
 
-        <div id="modalBody" class="calendar-modal-body">
+            <div class="form-grid">
+
+                <div class="form-group full">
+
+                    <label for="eventTitle">
+                        Event Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="eventTitle"
+                        required
+                        maxlength="150"
+                        placeholder="Example: Internal Exam"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="eventDate">
+                        Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="eventDate"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="eventType">
+                        Event Type
+                    </label>
+
+                    <select id="eventType" required>
+
+                        <option value="Personal">
+                            Personal
+                        </option>
+
+                        <option value="Exam">
+                            Exam
+                        </option>
+
+                        <option value="Holiday">
+                            Holiday
+                        </option>
+
+                        <option value="College Event">
+                            College Event
+                        </option>
+
+                        <option value="Assignment">
+                            Assignment
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="startTime">
+                        Start Time
+                    </label>
+
+                    <input
+                        type="time"
+                        id="startTime"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="endTime">
+                        End Time
+                    </label>
+
+                    <input
+                        type="time"
+                        id="endTime"
+                    >
+
+                </div>
+
+                <div class="form-group full">
+
+                    <label for="eventDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="eventDescription"
+                        maxlength="1000"
+                        placeholder="Add details if needed..."
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="modal-btn"
+                    id="cancelEventForm"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="modal-btn primary"
+                    id="saveEventButton"
+                >
+                    Save Event
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     EVENT DETAILS MODAL
+     ===================================================== -->
+
+<div id="eventDetailsOverlay" class="modal-overlay">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="detailTitle">
+                Event Details
+            </h2>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeEventDetails"
+            >
+                ×
+            </button>
+
         </div>
 
+        <div id="eventDetailsContent"></div>
 
-        <div id="modalFooter" class="calendar-modal-footer">
-        </div>
+        <div
+            id="eventDetailActions"
+            class="modal-actions"
+        ></div>
 
     </div>
 
@@ -463,736 +1228,406 @@
 
 <script>
 
-    /* =========================================================
-       SUPABASE
-       ========================================================= */
+/* =========================================================
+   SUPABASE
+   ========================================================= */
 
-    const SUPABASE_URL =
-        "https://bjfccfveekebgbkqreyp.supabase.co";
+const SUPABASE_URL =
+    "https://bjfccfveekebgbkqreyp.supabase.co";
 
-    const SUPABASE_KEY =
-        "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+const SUPABASE_KEY =
+    "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
 
-    const supabaseClient =
-        window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+/* =========================================================
+   ADMIN ACCOUNTS
+   ========================================================= */
+
+const ADMIN_IDS = [
+    "fb206c6f-729b-4e04-a61a-1bec9cfb32db",
+    "aa34b993-85e3-4cf4-96b5-adaa2cc1f9f4"
+];
+
+
+/* =========================================================
+   GLOBAL STATE
+   ========================================================= */
+
+let currentUser = null;
+let isAdmin = false;
+
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
+let officialEvents = [];
+let personalEvents = [];
+let officialCompletions = [];
+
+let editingEvent = null;
+let editingEventKind = null;
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const calendarGrid =
+    document.getElementById("calendarGrid");
+
+const monthTitle =
+    document.getElementById("monthTitle");
+
+const upcomingList =
+    document.getElementById("upcomingList");
+
+const statusMessage =
+    document.getElementById("statusMessage");
+
+const addPersonalButton =
+    document.getElementById("addPersonalButton");
+
+const addOfficialButton =
+    document.getElementById("addOfficialButton");
+
+const eventFormOverlay =
+    document.getElementById("eventFormOverlay");
+
+const eventDetailsOverlay =
+    document.getElementById("eventDetailsOverlay");
+
+const eventForm =
+    document.getElementById("eventForm");
+
+const eventFormTitle =
+    document.getElementById("eventFormTitle");
+
+const eventTitle =
+    document.getElementById("eventTitle");
+
+const eventDate =
+    document.getElementById("eventDate");
+
+const eventType =
+    document.getElementById("eventType");
+
+const startTime =
+    document.getElementById("startTime");
+
+const endTime =
+    document.getElementById("endTime");
+
+const eventDescription =
+    document.getElementById("eventDescription");
+
+const saveEventButton =
+    document.getElementById("saveEventButton");
+
+const eventDetailsContent =
+    document.getElementById("eventDetailsContent");
+
+const eventDetailActions =
+    document.getElementById("eventDetailActions");
+
+const detailTitle =
+    document.getElementById("detailTitle");
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", initialize);
+
+
+async function initialize() {
+
+    const {
+        data,
+        error
+    } = await supabaseClient.auth.getUser();
+
+    if (error || !data || !data.user) {
+
+        window.location.href = "login.html";
+
+        return;
+    }
+
+    currentUser = data.user;
+
+    isAdmin =
+        ADMIN_IDS.includes(currentUser.id);
+
+    if (isAdmin) {
+        addOfficialButton.style.display = "inline-block";
+    }
+
+    await loadAllEvents();
+
+    renderCalendar();
+
+    renderUpcomingEvents();
+}
+
+
+/* =========================================================
+   LOAD EVENTS
+   ========================================================= */
+
+async function loadAllEvents() {
+
+    calendarGrid.innerHTML = `
+        <div
+            class="empty-calendar"
+            style="grid-column:1/-1;"
+        >
+            Loading calendar...
+        </div>
+    `;
+
+    const [
+        officialResult,
+        personalResult,
+        completionResult
+    ] = await Promise.all([
+
+        supabaseClient
+            .from("college_events")
+            .select("*")
+            .order("event_date", {
+                ascending: true
+            }),
+
+        supabaseClient
+            .from("personal_events")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("event_date", {
+                ascending: true
+            }),
+
+        supabaseClient
+            .from("college_event_completions")
+            .select("*")
+            .eq("user_id", currentUser.id)
+
+    ]);
+
+
+    if (officialResult.error) {
+
+        console.error(
+            "Official events error:",
+            officialResult.error
         );
 
-
-    /* =========================================================
-       ADMIN ACCOUNT IDS
-       ========================================================= */
-
-    const ADMIN_IDS = [
-
-        "fb206c6f-729b-4e04-a61a-1bec9cfb32db",
-
-        "aa34b993-85e3-4cf4-96b5-adaa2cc1f9f4"
-
-    ];
-
-
-    /* =========================================================
-       STATE
-       ========================================================= */
-
-    let currentDate = new Date();
-
-    let officialEvents = [];
-
-    let personalEvents = [];
-
-    let completionRecords = [];
-
-    let currentUser = null;
-
-    let selectedEvent = null;
-
-    let selectedEventSource = null;
-
-
-    /* =========================================================
-       DOM ELEMENTS
-       ========================================================= */
-
-    const calendarGrid =
-        document.getElementById("calendarGrid");
-
-    const calendarMonthYear =
-        document.getElementById("calendarMonthYear");
-
-    const upcomingEvents =
-        document.getElementById("upcomingEvents");
-
-    const previousMonthButton =
-        document.getElementById("previousMonth");
-
-    const nextMonthButton =
-        document.getElementById("nextMonth");
-
-    const todayButton =
-        document.getElementById("todayButton");
-
-    const adminControls =
-        document.getElementById("adminControls");
-
-    const addOfficialEventButton =
-        document.getElementById("addOfficialEventButton");
-
-    const addPersonalEventButton =
-        document.getElementById("addPersonalEventButton");
-
-    const modalOverlay =
-        document.getElementById("calendarModalOverlay");
-
-    const modalTitle =
-        document.getElementById("modalTitle");
-
-    const modalBody =
-        document.getElementById("modalBody");
-
-    const modalFooter =
-        document.getElementById("modalFooter");
-
-    const modalCloseButton =
-        document.getElementById("modalCloseButton");
-
-
-    /* =========================================================
-       BASIC FUNCTIONS
-       ========================================================= */
-
-    function isAdmin() {
-
-        return currentUser &&
-               ADMIN_IDS.includes(currentUser.id);
-
+        showStatus(
+            "Could not load official events.",
+            "error"
+        );
     }
 
 
-    function formatDate(date) {
+    if (personalResult.error) {
 
-        const year =
-            date.getFullYear();
-
-        const month =
-            String(date.getMonth() + 1)
-                .padStart(2, "0");
-
-        const day =
-            String(date.getDate())
-                .padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
-
-    }
-
-
-    function parseLocalDate(dateString) {
-
-        const [year, month, day] =
-            dateString.split("-").map(Number);
-
-        return new Date(
-            year,
-            month - 1,
-            day
+        console.error(
+            "Personal events error:",
+            personalResult.error
         );
 
+        showStatus(
+            "Could not load personal events.",
+            "error"
+        );
     }
 
 
-    function formatDisplayDate(dateString) {
+    if (completionResult.error) {
 
-        const date =
-            parseLocalDate(dateString);
+        console.error(
+            "Completion error:",
+            completionResult.error
+        );
 
-        return date.toLocaleDateString(
+        showStatus(
+            "Could not load event completion status.",
+            "error"
+        );
+    }
+
+
+    officialEvents =
+        officialResult.data || [];
+
+    personalEvents =
+        personalResult.data || [];
+
+    officialCompletions =
+        completionResult.data || [];
+}
+
+
+/* =========================================================
+   CALENDAR RENDERING
+   ========================================================= */
+
+function renderCalendar() {
+
+    const firstDay =
+        new Date(
+            currentYear,
+            currentMonth,
+            1
+        );
+
+    const firstWeekday =
+        firstDay.getDay();
+
+    const daysInMonth =
+        new Date(
+            currentYear,
+            currentMonth + 1,
+            0
+        ).getDate();
+
+    const previousMonthDays =
+        new Date(
+            currentYear,
+            currentMonth,
+            0
+        ).getDate();
+
+
+    const monthName =
+        new Date(
+            currentYear,
+            currentMonth,
+            1
+        ).toLocaleDateString(
             "en-IN",
             {
-                day: "numeric",
                 month: "long",
                 year: "numeric"
             }
         );
 
-    }
+
+    monthTitle.textContent =
+        monthName;
 
 
-    function getDaysDifference(eventDate) {
-
-        const today = new Date();
-
-        today.setHours(0, 0, 0, 0);
-
-        const targetDate =
-            parseLocalDate(eventDate);
-
-        targetDate.setHours(0, 0, 0, 0);
-
-        const difference =
-            targetDate - today;
-
-        return Math.round(
-            difference /
-            (1000 * 60 * 60 * 24)
-        );
-
-    }
+    calendarGrid.innerHTML = "";
 
 
-    function getCountdownText(eventDate) {
+    /*
+       Always render 42 cells.
+       This keeps the calendar stable
+       and professional on phone and desktop.
+    */
 
-        const days =
-            getDaysDifference(eventDate);
+    for (let cell = 0; cell < 42; cell++) {
 
-        if (days < 0) {
-
-            return "Past event";
-
-        }
-
-        if (days === 0) {
-
-            return "Today";
-
-        }
-
-        if (days === 1) {
-
-            return "Tomorrow";
-
-        }
-
-        return `${days} days left`;
-
-    }
+        let dayNumber;
+        let cellMonth = currentMonth;
+        let cellYear = currentYear;
+        let isOtherMonth = false;
 
 
-    function escapeHTML(value) {
+        if (cell < firstWeekday) {
 
-        if (!value) {
-            return "";
-        }
+            dayNumber =
+                previousMonthDays -
+                firstWeekday +
+                cell +
+                1;
 
-        return String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+            cellMonth =
+                currentMonth - 1;
 
-    }
-
-
-    function getEventTimeText(event) {
-
-        if (!event.start_time) {
-
-            return "";
-
-        }
-
-        let text =
-            event.start_time.substring(0, 5);
-
-        if (event.end_time) {
-
-            text +=
-                " – " +
-                event.end_time.substring(0, 5);
-
-        }
-
-        return text;
-
-    }
-
-
-    /* =========================================================
-       MODAL
-       ========================================================= */
-
-    function openModal(title, body, footer) {
-
-        modalTitle.textContent = title;
-
-        modalBody.innerHTML = body;
-
-        modalFooter.innerHTML = footer || "";
-
-        modalOverlay.classList.add("active");
-
-    }
-
-
-    function closeModal() {
-
-        modalOverlay.classList.remove("active");
-
-        selectedEvent = null;
-
-        selectedEventSource = null;
-
-    }
-
-
-    modalCloseButton.addEventListener(
-        "click",
-        closeModal
-    );
-
-
-    modalOverlay.addEventListener(
-        "click",
-        function(event) {
-
-            if (
-                event.target === modalOverlay
-            ) {
-
-                closeModal();
-
+            if (cellMonth < 0) {
+                cellMonth = 11;
+                cellYear--;
             }
 
-        }
-    );
+            isOtherMonth = true;
 
-
-    /* =========================================================
-       USER
-       ========================================================= */
-
-    async function loadUser() {
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth.getUser();
-
-
-        if (error) {
-
-            console.error(error);
-
-            return;
-
-        }
-
-
-        currentUser =
-            data.user;
-
-
-        if (!currentUser) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        if (isAdmin()) {
-
-            adminControls.style.display =
-                "block";
-
-        }
-
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       LOAD ALL CALENDAR DATA
-       ========================================================= */
-
-    async function loadCalendarData() {
-
-        try {
-
-            const officialResult =
-                await supabaseClient
-                    .from("college_events")
-                    .select("*")
-                    .order(
-                        "event_date",
-                        {
-                            ascending: true
-                        }
-                    );
-
-
-            if (officialResult.error) {
-
-                throw officialResult.error;
-
-            }
-
-
-            officialEvents =
-                officialResult.data || [];
-
-
-            const personalResult =
-                await supabaseClient
-                    .from("personal_events")
-                    .select("*")
-                    .eq(
-                        "user_id",
-                        currentUser.id
-                    )
-                    .order(
-                        "event_date",
-                        {
-                            ascending: true
-                        }
-                    );
-
-
-            if (personalResult.error) {
-
-                throw personalResult.error;
-
-            }
-
-
-            personalEvents =
-                personalResult.data || [];
-
-
-            const completionResult =
-                await supabaseClient
-                    .from("college_event_completions")
-                    .select("*")
-                    .eq(
-                        "user_id",
-                        currentUser.id
-                    );
-
-
-            if (completionResult.error) {
-
-                throw completionResult.error;
-
-            }
-
-
-            completionRecords =
-                completionResult.data || [];
-
-
-            renderCalendar();
-
-            renderUpcomingEvents();
-
-        }
-        catch (error) {
-
-            console.error(
-                "Calendar loading error:",
-                error
-            );
-
-            calendarGrid.innerHTML =
-                `<div class="empty-message">
-                    Unable to load calendar events.
-                </div>`;
-
-        }
-
-    }
-
-
-    /* =========================================================
-       COMPLETION
-       ========================================================= */
-
-    function isOfficialEventCompleted(eventId) {
-
-        return completionRecords.some(
-            record =>
-                record.event_id === eventId &&
-                record.completed === true
-        );
-
-    }
-
-
-    async function toggleOfficialCompletion(event) {
-
-        const completed =
-            isOfficialEventCompleted(event.id);
-
-
-        if (completed) {
-
-            const { error } =
-                await supabaseClient
-                    .from(
-                        "college_event_completions"
-                    )
-                    .delete()
-                    .eq(
-                        "event_id",
-                        event.id
-                    )
-                    .eq(
-                        "user_id",
-                        currentUser.id
-                    );
-
-
-            if (error) {
-
-                console.error(error);
-
-                alert(
-                    "Unable to update completion status."
-                );
-
-                return;
-
-            }
-
-        }
-        else {
-
-            const { error } =
-                await supabaseClient
-                    .from(
-                        "college_event_completions"
-                    )
-                    .upsert(
-                        {
-                            event_id:
-                                event.id,
-
-                            user_id:
-                                currentUser.id,
-
-                            completed:
-                                true,
-
-                            completed_at:
-                                new Date()
-                                    .toISOString()
-                        },
-                        {
-                            onConflict:
-                                "event_id,user_id"
-                        }
-                    );
-
-
-            if (error) {
-
-                console.error(error);
-
-                alert(
-                    "Unable to mark the event as completed."
-                );
-
-                return;
-
-            }
-
-        }
-
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       CALENDAR RENDERING
-       ========================================================= */
-
-    function renderCalendar() {
-
-        const year =
-            currentDate.getFullYear();
-
-        const month =
-            currentDate.getMonth();
-
-
-        calendarMonthYear.textContent =
-            currentDate.toLocaleDateString(
-                "en-IN",
-                {
-                    month: "long",
-                    year: "numeric"
-                }
-            );
-
-
-        calendarGrid.innerHTML = "";
-
-
-        const firstDay =
-            new Date(
-                year,
-                month,
-                1
-            ).getDay();
-
-
-        const daysInMonth =
-            new Date(
-                year,
-                month + 1,
-                0
-            ).getDate();
-
-
-        const daysInPreviousMonth =
-            new Date(
-                year,
-                month,
-                0
-            ).getDate();
-
-
-        for (
-            let i = firstDay - 1;
-            i >= 0;
-            i--
+        } else if (
+            cell >= firstWeekday + daysInMonth
         ) {
 
-            const dayNumber =
-                daysInPreviousMonth - i;
+            dayNumber =
+                cell -
+                (firstWeekday + daysInMonth) +
+                1;
 
-            const date =
-                new Date(
-                    year,
-                    month - 1,
-                    dayNumber
-                );
+            cellMonth =
+                currentMonth + 1;
 
-            createCalendarDay(
-                date,
-                true
-            );
+            if (cellMonth > 11) {
+                cellMonth = 0;
+                cellYear++;
+            }
 
+            isOtherMonth = true;
+
+        } else {
+
+            dayNumber =
+                cell -
+                firstWeekday +
+                1;
         }
 
-
-        for (
-            let day = 1;
-            day <= daysInMonth;
-            day++
-        ) {
-
-            const date =
-                new Date(
-                    year,
-                    month,
-                    day
-                );
-
-            createCalendarDay(
-                date,
-                false
-            );
-
-        }
-
-
-        const totalCells =
-            calendarGrid.children.length;
-
-
-        const remaining =
-            42 - totalCells;
-
-
-        for (
-            let day = 1;
-            day <= remaining;
-            day++
-        ) {
-
-            const date =
-                new Date(
-                    year,
-                    month + 1,
-                    day
-                );
-
-            createCalendarDay(
-                date,
-                true
-            );
-
-        }
-
-    }
-
-
-    function createCalendarDay(
-        date,
-        isOtherMonth
-    ) {
 
         const dateString =
-            formatDate(date);
+            makeDateString(
+                cellYear,
+                cellMonth,
+                dayNumber
+            );
 
 
         const dayElement =
             document.createElement("div");
-
 
         dayElement.className =
             "calendar-day";
 
 
         if (isOtherMonth) {
-
             dayElement.classList.add(
-                "calendar-day-other"
+                "other-month"
             );
-
         }
 
 
-        const today =
-            new Date();
-
-
         if (
-            date.getFullYear() ===
-                today.getFullYear() &&
-            date.getMonth() ===
-                today.getMonth() &&
-            date.getDate() ===
-                today.getDate()
+            isToday(
+                cellYear,
+                cellMonth,
+                dayNumber
+            )
         ) {
-
             dayElement.classList.add(
-                "calendar-day-today"
+                "today"
             );
-
         }
 
 
         const numberElement =
             document.createElement("div");
 
-
         numberElement.className =
-            "calendar-day-number";
-
+            "day-number";
 
         numberElement.textContent =
-            date.getDate();
+            dayNumber;
 
 
         dayElement.appendChild(
@@ -1203,49 +1638,30 @@
         const eventsContainer =
             document.createElement("div");
 
-
         eventsContainer.className =
-            "calendar-day-events";
+            "day-events";
 
 
-        officialEvents
-            .filter(
-                event =>
-                    event.event_date ===
-                    dateString
-            )
-            .forEach(
-                event => {
-
-                    eventsContainer.appendChild(
-                        createCalendarEvent(
-                            event,
-                            "official"
-                        )
-                    );
-
-                }
+        const dayEvents =
+            getEventsForDate(
+                dateString
             );
 
 
-        personalEvents
-            .filter(
-                event =>
-                    event.event_date ===
-                    dateString
-            )
-            .forEach(
-                event => {
+        dayEvents.forEach(
+            function(event) {
 
-                    eventsContainer.appendChild(
-                        createCalendarEvent(
-                            event,
-                            "personal"
-                        )
+                const eventButton =
+                    createEventButton(
+                        event
                     );
 
-                }
-            );
+                eventsContainer.appendChild(
+                    eventButton
+                );
+
+            }
+        );
 
 
         dayElement.appendChild(
@@ -1256,1893 +1672,1807 @@
         calendarGrid.appendChild(
             dayElement
         );
-
     }
+}
 
 
-    function createCalendarEvent(
-        event,
-        eventSource
-    ) {
+/* =========================================================
+   GET EVENTS FOR DATE
+   ========================================================= */
 
-        const eventElement =
-            document.createElement("div");
+function getEventsForDate(dateString) {
 
+    const official =
+        officialEvents
+            .filter(function(event) {
+                return event.event_date === dateString;
+            })
+            .map(function(event) {
 
-        eventElement.className =
-            "calendar-event-item";
-
-
-        if (
-            eventSource === "official"
-        ) {
-
-            eventElement.classList.add(
-                "calendar-event-official"
-            );
-
-        }
-        else {
-
-            eventElement.classList.add(
-                "calendar-event-personal"
-            );
-
-        }
-
-
-        let completed = false;
-
-
-        if (
-            eventSource === "official"
-        ) {
-
-            completed =
-                isOfficialEventCompleted(
-                    event.id
-                );
-
-        }
-        else {
-
-            completed =
-                event.completed === true;
-
-        }
-
-
-        if (completed) {
-
-            eventElement.classList.add(
-                "calendar-event-completed"
-            );
-
-        }
-
-
-        eventElement.innerHTML = `
-
-            <span class="calendar-event-dot"></span>
-
-            <span class="calendar-event-title">
-                ${escapeHTML(event.title)}
-            </span>
-
-        `;
-
-
-        eventElement.title =
-            `${event.title} — ${getCountdownText(event.event_date)}`;
-
-
-        eventElement.addEventListener(
-            "click",
-            function(clickEvent) {
-
-                clickEvent.stopPropagation();
-
-                showEventInformation(
-                    event,
-                    eventSource
-                );
-
-            }
-        );
-
-
-        return eventElement;
-
-    }
-
-
-    /* =========================================================
-       EVENT INFORMATION
-       ========================================================= */
-
-    function showEventInformation(
-        event,
-        eventSource
-    ) {
-
-        selectedEvent =
-            event;
-
-        selectedEventSource =
-            eventSource;
-
-
-        const isOfficial =
-            eventSource === "official";
-
-
-        const completed =
-            isOfficial
-                ? isOfficialEventCompleted(event.id)
-                : event.completed === true;
-
-
-        const eventType =
-            isOfficial
-                ? "Official College Event"
-                : "Personal Event";
-
-
-        const time =
-            getEventTimeText(event);
-
-
-        const body = `
-
-            <div class="event-detail-row">
-
-                <span class="event-detail-label">
-                    Event
-                </span>
-
-                <div class="event-detail-value">
-                    ${escapeHTML(event.title)}
-                </div>
-
-            </div>
-
-
-            <div class="event-detail-row">
-
-                <span class="event-detail-label">
-                    Type
-                </span>
-
-                <div class="event-detail-value">
-                    ${escapeHTML(
-                        event.event_type ||
-                        eventType
-                    )}
-                </div>
-
-            </div>
-
-
-            <div class="event-detail-row">
-
-                <span class="event-detail-label">
-                    Date
-                </span>
-
-                <div class="event-detail-value">
-                    ${formatDisplayDate(event.event_date)}
-                </div>
-
-            </div>
-
-
-            ${
-                time
-                    ? `
-                        <div class="event-detail-row">
-
-                            <span class="event-detail-label">
-                                Time
-                            </span>
-
-                            <div class="event-detail-value">
-                                ${escapeHTML(time)}
-                            </div>
-
-                        </div>
-                    `
-                    : ""
-            }
-
-
-            <div class="event-detail-row">
-
-                <span class="event-detail-label">
-                    Status
-                </span>
-
-                <div class="event-countdown-box">
-                    ${
-                        completed
-                            ? "✓ Completed"
-                            : getCountdownText(
-                                event.event_date
-                              )
-                    }
-                </div>
-
-            </div>
-
-
-            ${
-                event.description
-                    ? `
-                        <div class="event-detail-row">
-
-                            <span class="event-detail-label">
-                                Description
-                            </span>
-
-                            <div class="event-detail-value">
-                                ${escapeHTML(
-                                    event.description
-                                )}
-                            </div>
-
-                        </div>
-                    `
-                    : ""
-            }
-
-        `;
-
-
-        let footer = "";
-
-
-        if (isOfficial) {
-
-            if (isAdmin()) {
-
-                footer += `
-                    <button
-                        class="btn btn-primary"
-                        onclick="openEditOfficialEvent()">
-                        Edit Event
-                    </button>
-
-                    <button
-                        class="btn btn-secondary"
-                        onclick="deleteSelectedOfficialEvent()">
-                        Delete Event
-                    </button>
-                `;
-
-            }
-            else {
-
-                footer += `
-                    <button
-                        class="btn btn-primary"
-                        onclick="toggleSelectedOfficialCompletion()">
-                        ${
-                            completed
-                                ? "Mark as Incomplete"
-                                : "Mark as Completed"
-                        }
-                    </button>
-                `;
-
-            }
-
-        }
-        else {
-
-            footer += `
-                <button
-                    class="btn btn-primary"
-                    onclick="openEditPersonalEvent()">
-                    Edit Event
-                </button>
-
-                <button
-                    class="btn btn-secondary"
-                    onclick="deleteSelectedPersonalEvent()">
-                    Delete Event
-                </button>
-
-                <button
-                    class="btn btn-secondary"
-                    onclick="toggleSelectedPersonalCompletion()">
-                    ${
-                        completed
-                            ? "Mark as Incomplete"
-                            : "Mark as Completed"
-                    }
-                </button>
-            `;
-
-        }
-
-
-        openModal(
-            eventType,
-            body,
-            footer
-        );
-
-    }
-
-
-    /* =========================================================
-       ADMIN - ADD OFFICIAL EVENT
-       ========================================================= */
-
-    function openAddOfficialEvent() {
-
-        if (!isAdmin()) {
-
-            alert(
-                "Only authorized administrators can add official events."
-            );
-
-            return;
-
-        }
-
-
-        const today =
-            formatDate(new Date());
-
-
-        const body = `
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Title
-                </label>
-
-                <input
-                    id="officialTitleInput"
-                    type="text"
-                    placeholder="Example: Internal Assessment 1"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Date
-                </label>
-
-                <input
-                    id="officialDateInput"
-                    type="date"
-                    value="${today}"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Type
-                </label>
-
-                <select id="officialTypeInput">
-
-                    <option value="Exam">
-                        Exam
-                    </option>
-
-                    <option value="Holiday">
-                        Holiday
-                    </option>
-
-                    <option value="Assignment">
-                        Assignment
-                    </option>
-
-                    <option value="College Event">
-                        College Event
-                    </option>
-
-                    <option value="Other">
-                        Other
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Start Time
-                </label>
-
-                <input
-                    id="officialStartTimeInput"
-                    type="time">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    End Time
-                </label>
-
-                <input
-                    id="officialEndTimeInput"
-                    type="time">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Description
-                </label>
-
-                <textarea
-                    id="officialDescriptionInput"
-                    placeholder="Optional details"></textarea>
-
-            </div>
-
-
-            <div
-                id="officialFormMessage"
-                class="calendar-message">
-            </div>
-
-        `;
-
-
-        const footer = `
-
-            <button
-                class="btn btn-primary"
-                onclick="saveOfficialEvent()">
-                Add Official Event
-            </button>
-
-            <button
-                class="btn btn-secondary"
-                onclick="closeModal()">
-                Cancel
-            </button>
-
-        `;
-
-
-        openModal(
-            "Add Official Event",
-            body,
-            footer
-        );
-
-    }
-
-
-    async function saveOfficialEvent() {
-
-        if (!isAdmin()) {
-
-            alert(
-                "Only authorized administrators can add official events."
-            );
-
-            return;
-
-        }
-
-
-        const title =
-            document
-                .getElementById(
-                    "officialTitleInput"
-                )
-                .value
-                .trim();
-
-
-        const eventDate =
-            document
-                .getElementById(
-                    "officialDateInput"
-                )
-                .value;
-
-
-        const eventType =
-            document
-                .getElementById(
-                    "officialTypeInput"
-                )
-                .value;
-
-
-        const startTime =
-            document
-                .getElementById(
-                    "officialStartTimeInput"
-                )
-                .value || null;
-
-
-        const endTime =
-            document
-                .getElementById(
-                    "officialEndTimeInput"
-                )
-                .value || null;
-
-
-        const description =
-            document
-                .getElementById(
-                    "officialDescriptionInput"
-                )
-                .value
-                .trim();
-
-
-        const message =
-            document.getElementById(
-                "officialFormMessage"
-            );
-
-
-        if (!title || !eventDate) {
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Please enter the event title and date.";
-
-            return;
-
-        }
-
-
-        message.className =
-            "calendar-message";
-
-
-        message.textContent =
-            "Adding event...";
-
-
-        const { error } =
-            await supabaseClient
-                .from("college_events")
-                .insert(
-                    {
-                        title:
-                            title,
-
-                        event_date:
-                            eventDate,
-
-                        event_type:
-                            eventType,
-
-                        description:
-                            description,
-
-                        start_time:
-                            startTime,
-
-                        end_time:
-                            endTime,
-
-                        created_by:
-                            currentUser.id
-                    }
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Unable to add event.";
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       ADMIN - EDIT OFFICIAL EVENT
-       ========================================================= */
-
-    function openEditOfficialEvent() {
-
-        if (!selectedEvent) return;
-
-        if (!isAdmin()) return;
-
-
-        const event =
-            selectedEvent;
-
-
-        const body = `
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Title
-                </label>
-
-                <input
-                    id="editOfficialTitleInput"
-                    type="text"
-                    value="${escapeHTML(event.title)}"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Date
-                </label>
-
-                <input
-                    id="editOfficialDateInput"
-                    type="date"
-                    value="${event.event_date}"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Type
-                </label>
-
-                <select id="editOfficialTypeInput">
-
-                    <option value="Exam"
-                        ${event.event_type === "Exam" ? "selected" : ""}>
-                        Exam
-                    </option>
-
-                    <option value="Holiday"
-                        ${event.event_type === "Holiday" ? "selected" : ""}>
-                        Holiday
-                    </option>
-
-                    <option value="Assignment"
-                        ${event.event_type === "Assignment" ? "selected" : ""}>
-                        Assignment
-                    </option>
-
-                    <option value="College Event"
-                        ${event.event_type === "College Event" ? "selected" : ""}>
-                        College Event
-                    </option>
-
-                    <option value="Other"
-                        ${event.event_type === "Other" ? "selected" : ""}>
-                        Other
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Start Time
-                </label>
-
-                <input
-                    id="editOfficialStartTimeInput"
-                    type="time"
-                    value="${event.start_time ? event.start_time.substring(0,5) : ""}">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    End Time
-                </label>
-
-                <input
-                    id="editOfficialEndTimeInput"
-                    type="time"
-                    value="${event.end_time ? event.end_time.substring(0,5) : ""}">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Description
-                </label>
-
-                <textarea
-                    id="editOfficialDescriptionInput">${escapeHTML(event.description || "")}</textarea>
-
-            </div>
-
-
-            <div
-                id="editOfficialMessage"
-                class="calendar-message">
-            </div>
-
-        `;
-
-
-        const footer = `
-
-            <button
-                class="btn btn-primary"
-                onclick="saveEditedOfficialEvent()">
-                Save Changes
-            </button>
-
-            <button
-                class="btn btn-secondary"
-                onclick="closeModal()">
-                Cancel
-            </button>
-
-        `;
-
-
-        openModal(
-            "Edit Official Event",
-            body,
-            footer
-        );
-
-    }
-
-
-    async function saveEditedOfficialEvent() {
-
-        if (!selectedEvent) return;
-
-        if (!isAdmin()) return;
-
-
-        const title =
-            document
-                .getElementById(
-                    "editOfficialTitleInput"
-                )
-                .value
-                .trim();
-
-
-        const eventDate =
-            document
-                .getElementById(
-                    "editOfficialDateInput"
-                )
-                .value;
-
-
-        const eventType =
-            document
-                .getElementById(
-                    "editOfficialTypeInput"
-                )
-                .value;
-
-
-        const startTime =
-            document
-                .getElementById(
-                    "editOfficialStartTimeInput"
-                )
-                .value || null;
-
-
-        const endTime =
-            document
-                .getElementById(
-                    "editOfficialEndTimeInput"
-                )
-                .value || null;
-
-
-        const description =
-            document
-                .getElementById(
-                    "editOfficialDescriptionInput"
-                )
-                .value
-                .trim();
-
-
-        const message =
-            document.getElementById(
-                "editOfficialMessage"
-            );
-
-
-        if (!title || !eventDate) {
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Please enter the title and date.";
-
-            return;
-
-        }
-
-
-        const { error } =
-            await supabaseClient
-                .from("college_events")
-                .update(
-                    {
-                        title:
-                            title,
-
-                        event_date:
-                            eventDate,
-
-                        event_type:
-                            eventType,
-
-                        description:
-                            description,
-
-                        start_time:
-                            startTime,
-
-                        end_time:
-                            endTime,
-
-                        updated_at:
-                            new Date()
-                                .toISOString()
-                    }
-                )
-                .eq(
-                    "id",
-                    selectedEvent.id
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Unable to update event.";
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       ADMIN - DELETE OFFICIAL EVENT
-       ========================================================= */
-
-    async function deleteSelectedOfficialEvent() {
-
-        if (!selectedEvent) return;
-
-        if (!isAdmin()) return;
-
-
-        const confirmed =
-            confirm(
-                `Delete this official event?\n\n${selectedEvent.title}`
-            );
-
-
-        if (!confirmed) return;
-
-
-        const eventId =
-            selectedEvent.id;
-
-
-        const { error } =
-            await supabaseClient
-                .from("college_events")
-                .delete()
-                .eq(
-                    "id",
-                    eventId
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            alert(
-                "Unable to delete the event."
-            );
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       STUDENT - MARK OFFICIAL COMPLETED
-       ========================================================= */
-
-    async function toggleSelectedOfficialCompletion() {
-
-        if (!selectedEvent) return;
-
-        const event =
-            selectedEvent;
-
-
-        closeModal();
-
-        await toggleOfficialCompletion(
-            event
-        );
-
-    }
-
-
-    /* =========================================================
-       PERSONAL EVENT - ADD
-       ========================================================= */
-
-    function openAddPersonalEvent() {
-
-        const today =
-            formatDate(new Date());
-
-
-        const body = `
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Title
-                </label>
-
-                <input
-                    id="personalTitleInput"
-                    type="text"
-                    placeholder="Example: Study Computer Networks"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Date
-                </label>
-
-                <input
-                    id="personalDateInput"
-                    type="date"
-                    value="${today}"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Type
-                </label>
-
-                <select id="personalTypeInput">
-
-                    <option value="Personal">
-                        Personal
-                    </option>
-
-                    <option value="Study">
-                        Study
-                    </option>
-
-                    <option value="Assignment">
-                        Assignment
-                    </option>
-
-                    <option value="Exam Preparation">
-                        Exam Preparation
-                    </option>
-
-                    <option value="Reminder">
-                        Reminder
-                    </option>
-
-                    <option value="Other">
-                        Other
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Start Time
-                </label>
-
-                <input
-                    id="personalStartTimeInput"
-                    type="time">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    End Time
-                </label>
-
-                <input
-                    id="personalEndTimeInput"
-                    type="time">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Description
-                </label>
-
-                <textarea
-                    id="personalDescriptionInput"
-                    placeholder="Optional details"></textarea>
-
-            </div>
-
-
-            <div
-                id="personalFormMessage"
-                class="calendar-message">
-            </div>
-
-        `;
-
-
-        const footer = `
-
-            <button
-                class="btn btn-primary"
-                onclick="savePersonalEvent()">
-                Add Personal Event
-            </button>
-
-            <button
-                class="btn btn-secondary"
-                onclick="closeModal()">
-                Cancel
-            </button>
-
-        `;
-
-
-        openModal(
-            "Add Personal Event",
-            body,
-            footer
-        );
-
-    }
-
-
-    async function savePersonalEvent() {
-
-        const title =
-            document
-                .getElementById(
-                    "personalTitleInput"
-                )
-                .value
-                .trim();
-
-
-        const eventDate =
-            document
-                .getElementById(
-                    "personalDateInput"
-                )
-                .value;
-
-
-        const eventType =
-            document
-                .getElementById(
-                    "personalTypeInput"
-                )
-                .value;
-
-
-        const startTime =
-            document
-                .getElementById(
-                    "personalStartTimeInput"
-                )
-                .value || null;
-
-
-        const endTime =
-            document
-                .getElementById(
-                    "personalEndTimeInput"
-                )
-                .value || null;
-
-
-        const description =
-            document
-                .getElementById(
-                    "personalDescriptionInput"
-                )
-                .value
-                .trim();
-
-
-        const message =
-            document.getElementById(
-                "personalFormMessage"
-            );
-
-
-        if (!title || !eventDate) {
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Please enter the event title and date.";
-
-            return;
-
-        }
-
-
-        const { error } =
-            await supabaseClient
-                .from("personal_events")
-                .insert(
-                    {
-                        user_id:
-                            currentUser.id,
-
-                        title:
-                            title,
-
-                        event_date:
-                            eventDate,
-
-                        event_type:
-                            eventType,
-
-                        description:
-                            description,
-
-                        start_time:
-                            startTime,
-
-                        end_time:
-                            endTime,
-
-                        completed:
-                            false
-                    }
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Unable to add personal event.";
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       PERSONAL EVENT - EDIT
-       ========================================================= */
-
-    function openEditPersonalEvent() {
-
-        if (!selectedEvent) return;
-
-
-        const event =
-            selectedEvent;
-
-
-        const body = `
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Title
-                </label>
-
-                <input
-                    id="editPersonalTitleInput"
-                    type="text"
-                    value="${escapeHTML(event.title)}"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Date
-                </label>
-
-                <input
-                    id="editPersonalDateInput"
-                    type="date"
-                    value="${event.event_date}"
-                    required>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Event Type
-                </label>
-
-                <select id="editPersonalTypeInput">
-
-                    <option value="Personal"
-                        ${event.event_type === "Personal" ? "selected" : ""}>
-                        Personal
-                    </option>
-
-                    <option value="Study"
-                        ${event.event_type === "Study" ? "selected" : ""}>
-                        Study
-                    </option>
-
-                    <option value="Assignment"
-                        ${event.event_type === "Assignment" ? "selected" : ""}>
-                        Assignment
-                    </option>
-
-                    <option value="Exam Preparation"
-                        ${event.event_type === "Exam Preparation" ? "selected" : ""}>
-                        Exam Preparation
-                    </option>
-
-                    <option value="Reminder"
-                        ${event.event_type === "Reminder" ? "selected" : ""}>
-                        Reminder
-                    </option>
-
-                    <option value="Other"
-                        ${event.event_type === "Other" ? "selected" : ""}>
-                        Other
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Start Time
-                </label>
-
-                <input
-                    id="editPersonalStartTimeInput"
-                    type="time"
-                    value="${event.start_time ? event.start_time.substring(0,5) : ""}">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    End Time
-                </label>
-
-                <input
-                    id="editPersonalEndTimeInput"
-                    type="time"
-                    value="${event.end_time ? event.end_time.substring(0,5) : ""}">
-
-            </div>
-
-
-            <div class="calendar-form-group">
-
-                <label>
-                    Description
-                </label>
-
-                <textarea
-                    id="editPersonalDescriptionInput">${escapeHTML(event.description || "")}</textarea>
-
-            </div>
-
-
-            <div
-                id="editPersonalMessage"
-                class="calendar-message">
-            </div>
-
-        `;
-
-
-        const footer = `
-
-            <button
-                class="btn btn-primary"
-                onclick="saveEditedPersonalEvent()">
-                Save Changes
-            </button>
-
-            <button
-                class="btn btn-secondary"
-                onclick="closeModal()">
-                Cancel
-            </button>
-
-        `;
-
-
-        openModal(
-            "Edit Personal Event",
-            body,
-            footer
-        );
-
-    }
-
-
-    async function saveEditedPersonalEvent() {
-
-        if (!selectedEvent) return;
-
-
-        const title =
-            document
-                .getElementById(
-                    "editPersonalTitleInput"
-                )
-                .value
-                .trim();
-
-
-        const eventDate =
-            document
-                .getElementById(
-                    "editPersonalDateInput"
-                )
-                .value;
-
-
-        const eventType =
-            document
-                .getElementById(
-                    "editPersonalTypeInput"
-                )
-                .value;
-
-
-        const startTime =
-            document
-                .getElementById(
-                    "editPersonalStartTimeInput"
-                )
-                .value || null;
-
-
-        const endTime =
-            document
-                .getElementById(
-                    "editPersonalEndTimeInput"
-                )
-                .value || null;
-
-
-        const description =
-            document
-                .getElementById(
-                    "editPersonalDescriptionInput"
-                )
-                .value
-                .trim();
-
-
-        const message =
-            document.getElementById(
-                "editPersonalMessage"
-            );
-
-
-        if (!title || !eventDate) {
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Please enter the title and date.";
-
-            return;
-
-        }
-
-
-        const { error } =
-            await supabaseClient
-                .from("personal_events")
-                .update(
-                    {
-                        title:
-                            title,
-
-                        event_date:
-                            eventDate,
-
-                        event_type:
-                            eventType,
-
-                        description:
-                            description,
-
-                        start_time:
-                            startTime,
-
-                        end_time:
-                            endTime,
-
-                        updated_at:
-                            new Date()
-                                .toISOString()
-                    }
-                )
-                .eq(
-                    "id",
-                    selectedEvent.id
-                )
-                .eq(
-                    "user_id",
-                    currentUser.id
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            message.className =
-                "calendar-message error";
-
-            message.textContent =
-                "Unable to update personal event.";
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       PERSONAL EVENT - DELETE
-       ========================================================= */
-
-    async function deleteSelectedPersonalEvent() {
-
-        if (!selectedEvent) return;
-
-
-        const confirmed =
-            confirm(
-                `Delete this personal event?\n\n${selectedEvent.title}`
-            );
-
-
-        if (!confirmed) return;
-
-
-        const { error } =
-            await supabaseClient
-                .from("personal_events")
-                .delete()
-                .eq(
-                    "id",
-                    selectedEvent.id
-                )
-                .eq(
-                    "user_id",
-                    currentUser.id
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            alert(
-                "Unable to delete personal event."
-            );
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       PERSONAL EVENT - COMPLETION
-       ========================================================= */
-
-    async function toggleSelectedPersonalCompletion() {
-
-        if (!selectedEvent) return;
-
-
-        const newStatus =
-            !selectedEvent.completed;
-
-
-        const { error } =
-            await supabaseClient
-                .from("personal_events")
-                .update(
-                    {
-                        completed:
-                            newStatus,
-
-                        updated_at:
-                            new Date()
-                                .toISOString()
-                    }
-                )
-                .eq(
-                    "id",
-                    selectedEvent.id
-                )
-                .eq(
-                    "user_id",
-                    currentUser.id
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            alert(
-                "Unable to update completion status."
-            );
-
-            return;
-
-        }
-
-
-        closeModal();
-
-        await loadCalendarData();
-
-    }
-
-
-    /* =========================================================
-       UPCOMING EVENTS
-       ========================================================= */
-
-    function renderUpcomingEvents() {
-
-        const combinedEvents = [
-
-            ...officialEvents.map(
-                event => ({
+                return {
                     ...event,
-                    source: "official"
-                })
-            ),
-
-            ...personalEvents.map(
-                event => ({
-                    ...event,
-                    source: "personal"
-                })
-            )
-
-        ];
-
-
-        combinedEvents.sort(
-            (a, b) =>
-                a.event_date.localeCompare(
-                    b.event_date
-                )
-        );
-
-
-        const upcoming =
-            combinedEvents.filter(
-                event =>
-                    getDaysDifference(
-                        event.event_date
-                    ) >= 0
-            );
-
-
-        if (upcoming.length === 0) {
-
-            upcomingEvents.innerHTML =
-                `<div class="empty-message">
-                    No upcoming events.
-                </div>`;
-
-            return;
-
-        }
-
-
-        upcomingEvents.innerHTML = "";
-
-
-        upcoming
-            .slice(0, 10)
-            .forEach(event => {
-
-                const card =
-                    document.createElement("div");
-
-
-                card.className =
-                    "calendar-event";
-
-
-                const completed =
-                    event.source === "official"
-                        ? isOfficialEventCompleted(
-                            event.id
-                        )
-                        : event.completed;
-
-
-                if (completed) {
-
-                    card.classList.add(
-                        "calendar-event-completed"
-                    );
-
-                }
-
-
-                const sourceLabel =
-                    event.source === "official"
-                        ? "Official College Event"
-                        : "Personal Event";
-
-
-                card.innerHTML = `
-
-                    <div class="event-date">
-
-                        <strong>
-                            ${escapeHTML(event.title)}
-                        </strong>
-
-                        <span>
-                            ${formatDisplayDate(
-                                event.event_date
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div>
-
-                        <span class="status-label">
-                            ${sourceLabel}
-                        </span>
-
-                        <div class="days-remaining">
-                            ${
-                                completed
-                                    ? "✓ Completed"
-                                    : getCountdownText(
-                                        event.event_date
-                                      )
-                            }
-                        </div>
-
-                    </div>
-
-                `;
-
-
-                card.style.cursor =
-                    "pointer";
-
-
-                card.addEventListener(
-                    "click",
-                    function() {
-
-                        showEventInformation(
-                            event,
-                            event.source
-                        );
-
-                    }
-                );
-
-
-                upcomingEvents.appendChild(
-                    card
-                );
+                    kind: "official",
+                    completed:
+                        isOfficialCompleted(event.id)
+                };
 
             });
 
+
+    const personal =
+        personalEvents
+            .filter(function(event) {
+                return event.event_date === dateString;
+            })
+            .map(function(event) {
+
+                return {
+                    ...event,
+                    kind: "personal",
+                    completed:
+                        Boolean(event.completed)
+                };
+
+            });
+
+
+    return [
+        ...official,
+        ...personal
+    ].sort(function(a, b) {
+
+        const timeA =
+            a.start_time || "99:99";
+
+        const timeB =
+            b.start_time || "99:99";
+
+        return timeA.localeCompare(timeB);
+    });
+}
+
+
+/* =========================================================
+   CREATE EVENT BUTTON
+   ========================================================= */
+
+function createEventButton(event) {
+
+    const button =
+        document.createElement("button");
+
+    button.type = "button";
+
+    button.className =
+        "calendar-event-item";
+
+
+    if (event.kind === "personal") {
+        button.classList.add("personal");
     }
 
 
-    /* =========================================================
-       NAVIGATION
-       ========================================================= */
+    if (event.completed) {
+        button.classList.add("completed");
+    }
 
-    previousMonthButton.addEventListener(
+
+    const time =
+        formatTime(
+            event.start_time
+        );
+
+
+    const timeHTML =
+        time
+            ? `<span class="event-time">${escapeHTML(time)}</span>`
+            : "";
+
+
+    button.innerHTML =
+        timeHTML +
+        `<span class="event-title">${escapeHTML(event.title)}</span>`;
+
+
+    button.addEventListener(
         "click",
         function() {
+            openEventDetails(
+                event
+            );
+        }
+    );
 
-            currentDate.setMonth(
-                currentDate.getMonth() - 1
+
+    return button;
+}
+
+
+/* =========================================================
+   UPCOMING EVENTS
+   ========================================================= */
+
+function renderUpcomingEvents() {
+
+    const allEvents = [
+
+        ...officialEvents.map(function(event) {
+            return {
+                ...event,
+                kind: "official",
+                completed:
+                    isOfficialCompleted(event.id)
+            };
+        }),
+
+        ...personalEvents.map(function(event) {
+            return {
+                ...event,
+                kind: "personal",
+                completed:
+                    Boolean(event.completed)
+            };
+        })
+
+    ];
+
+
+    allEvents.sort(function(a, b) {
+
+        const dateA =
+            `${a.event_date} ${a.start_time || "23:59"}`;
+
+        const dateB =
+            `${b.event_date} ${b.start_time || "23:59"}`;
+
+        return dateA.localeCompare(dateB);
+    });
+
+
+    const today =
+        getTodayString();
+
+
+    const upcoming =
+        allEvents
+            .filter(function(event) {
+
+                return event.event_date >= today;
+            })
+            .slice(0, 10);
+
+
+    if (upcoming.length === 0) {
+
+        upcomingList.innerHTML = `
+            <div class="empty-calendar">
+                No upcoming events.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    upcomingList.innerHTML = "";
+
+
+    upcoming.forEach(function(event) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "upcoming-event";
+
+
+        const date =
+            formatShortDate(
+                event.event_date
             );
 
-            renderCalendar();
 
-        }
-    );
-
-
-    nextMonthButton.addEventListener(
-        "click",
-        function() {
-
-            currentDate.setMonth(
-                currentDate.getMonth() + 1
+        const days =
+            getDaysRemaining(
+                event.event_date
             );
 
-            renderCalendar();
+
+        let countdown =
+            "";
+
+
+        if (days === 0) {
+            countdown = "TODAY";
+        }
+        else if (days === 1) {
+            countdown = "1 day left";
+        }
+        else {
+            countdown =
+                `${days} days left`;
+        }
+
+
+        const type =
+            event.kind === "official"
+                ? "Official"
+                : "Personal";
+
+
+        card.innerHTML = `
+
+            <div class="upcoming-date">
+                ${escapeHTML(date)}
+            </div>
+
+            <div class="upcoming-content">
+
+                <div class="upcoming-title">
+                    ${escapeHTML(event.title)}
+                </div>
+
+                <div class="upcoming-meta">
+
+                    ${escapeHTML(type)}
+                    •
+                    ${escapeHTML(event.event_type || "Other")}
+
+                    ${
+                        event.start_time
+                            ? ` • ${escapeHTML(formatTime(event.start_time))}`
+                            : ""
+                    }
+
+                </div>
+
+                <div
+                    class="upcoming-countdown ${
+                        days === 0 ? "today" : ""
+                    }"
+                >
+                    ${escapeHTML(countdown)}
+                </div>
+
+            </div>
+
+        `;
+
+
+        card.addEventListener(
+            "click",
+            function() {
+                openEventDetails(
+                    event
+                );
+            }
+        );
+
+
+        card.style.cursor =
+            "pointer";
+
+
+        upcomingList.appendChild(
+            card
+        );
+    });
+}
+
+
+/* =========================================================
+   EVENT DETAILS
+   ========================================================= */
+
+function openEventDetails(event) {
+
+    const days =
+        getDaysRemaining(
+            event.event_date
+        );
+
+
+    let countdownText;
+
+
+    if (days > 1) {
+        countdownText =
+            `${days} days left`;
+    }
+    else if (days === 1) {
+        countdownText =
+            "1 day left";
+    }
+    else if (days === 0) {
+        countdownText =
+            "TODAY";
+    }
+    else if (days === -1) {
+        countdownText =
+            "Event was yesterday";
+    }
+    else {
+        countdownText =
+            "Event completed";
+    }
+
+
+    const kindText =
+        event.kind === "official"
+            ? "Official College Event"
+            : "Personal Event";
+
+
+    const badgeClass =
+        event.kind === "personal"
+            ? "event-badge personal"
+            : "event-badge";
+
+
+    detailTitle.textContent =
+        event.title;
+
+
+    eventDetailsContent.innerHTML = `
+
+        <div class="event-detail">
+
+            <div class="event-detail-label">
+                Type
+            </div>
+
+            <div class="event-detail-value">
+                <span class="${badgeClass}">
+                    ${escapeHTML(kindText)}
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="event-detail">
+
+            <div class="event-detail-label">
+                Date
+            </div>
+
+            <div class="event-detail-value">
+                ${escapeHTML(
+                    formatLongDate(
+                        event.event_date
+                    )
+                )}
+            </div>
+
+        </div>
+
+
+        ${
+            event.start_time
+                ? `
+                    <div class="event-detail">
+
+                        <div class="event-detail-label">
+                            Time
+                        </div>
+
+                        <div class="event-detail-value">
+
+                            ${escapeHTML(
+                                formatTime(event.start_time)
+                            )}
+
+                            ${
+                                event.end_time
+                                    ? ` – ${escapeHTML(formatTime(event.end_time))}`
+                                    : ""
+                            }
+
+                        </div>
+
+                    </div>
+                `
+                : ""
+        }
+
+
+        <div class="event-detail">
+
+            <div class="event-detail-label">
+                Event Category
+            </div>
+
+            <div class="event-detail-value">
+                ${escapeHTML(
+                    event.event_type || "Other"
+                )}
+            </div>
+
+        </div>
+
+
+        <div class="event-detail">
+
+            <div class="event-detail-label">
+                Countdown
+            </div>
+
+            <div class="event-detail-value">
+
+                <strong>
+                    ${escapeHTML(countdownText)}
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        ${
+            event.description
+                ? `
+                    <div class="event-detail">
+
+                        <div class="event-detail-label">
+                            Description
+                        </div>
+
+                        <div class="event-detail-value">
+                            ${escapeHTML(
+                                event.description
+                            ).replace(/\n/g, "<br>")}
+                        </div>
+
+                    </div>
+                `
+                : ""
+        }
+
+    `;
+
+
+    eventDetailActions.innerHTML = "";
+
+
+    /* ---------- COMPLETION ---------- */
+
+    const completionRow =
+        document.createElement("label");
+
+    completionRow.className =
+        "completion-row";
+
+
+    const completionCheckbox =
+        document.createElement("input");
+
+    completionCheckbox.type =
+        "checkbox";
+
+    completionCheckbox.checked =
+        Boolean(event.completed);
+
+
+    const completionText =
+        document.createElement("span");
+
+    completionText.textContent =
+        event.completed
+            ? "Completed"
+            : "Mark as completed";
+
+
+    completionRow.appendChild(
+        completionCheckbox
+    );
+
+    completionRow.appendChild(
+        completionText
+    );
+
+
+    completionCheckbox.addEventListener(
+        "change",
+        async function() {
+
+            if (event.kind === "official") {
+
+                await setOfficialCompletion(
+                    event,
+                    completionCheckbox.checked
+                );
+
+            } else {
+
+                await setPersonalCompletion(
+                    event,
+                    completionCheckbox.checked
+                );
+            }
 
         }
     );
 
 
-    todayButton.addEventListener(
-        "click",
-        function() {
+    eventDetailsContent.appendChild(
+        completionRow
+    );
 
-            currentDate =
-                new Date();
+
+    /* ---------- EDIT ---------- */
+
+    if (
+        event.kind === "official" &&
+        isAdmin
+    ) {
+
+        const editButton =
+            document.createElement("button");
+
+        editButton.type = "button";
+
+        editButton.className =
+            "modal-btn primary";
+
+        editButton.textContent =
+            "Edit Official Event";
+
+
+        editButton.addEventListener(
+            "click",
+            function() {
+
+                closeEventDetails();
+
+                openEventForm(
+                    "official",
+                    event
+                );
+            }
+        );
+
+
+        eventDetailActions.appendChild(
+            editButton
+        );
+    }
+
+
+    if (
+        event.kind === "personal"
+    ) {
+
+        const editButton =
+            document.createElement("button");
+
+        editButton.type = "button";
+
+        editButton.className =
+            "modal-btn primary";
+
+        editButton.textContent =
+            "Edit";
+
+
+        editButton.addEventListener(
+            "click",
+            function() {
+
+                closeEventDetails();
+
+                openEventForm(
+                    "personal",
+                    event
+                );
+            }
+        );
+
+
+        eventDetailActions.appendChild(
+            editButton
+        );
+    }
+
+
+    /* ---------- DELETE ---------- */
+
+    if (
+        event.kind === "official" &&
+        isAdmin
+    ) {
+
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.type = "button";
+
+        deleteButton.className =
+            "modal-btn danger";
+
+        deleteButton.textContent =
+            "Delete";
+
+
+        deleteButton.addEventListener(
+            "click",
+            async function() {
+
+                const confirmed =
+                    confirm(
+                        "Delete this official event?"
+                    );
+
+
+                if (!confirmed) {
+                    return;
+                }
+
+
+                await deleteOfficialEvent(
+                    event
+                );
+            }
+        );
+
+
+        eventDetailActions.appendChild(
+            deleteButton
+        );
+    }
+
+
+    if (
+        event.kind === "personal"
+    ) {
+
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.type = "button";
+
+        deleteButton.className =
+            "modal-btn danger";
+
+        deleteButton.textContent =
+            "Delete";
+
+
+        deleteButton.addEventListener(
+            "click",
+            async function() {
+
+                const confirmed =
+                    confirm(
+                        "Delete this personal event?"
+                    );
+
+
+                if (!confirmed) {
+                    return;
+                }
+
+
+                await deletePersonalEvent(
+                    event
+                );
+            }
+        );
+
+
+        eventDetailActions.appendChild(
+            deleteButton
+        );
+    }
+
+
+    eventDetailsOverlay.classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   OPEN EVENT FORM
+   ========================================================= */
+
+function openEventForm(
+    kind,
+    event = null
+) {
+
+    editingEvent =
+        event;
+
+    editingEventKind =
+        kind;
+
+
+    eventForm.reset();
+
+
+    if (kind === "official") {
+
+        eventFormTitle.textContent =
+            event
+                ? "Edit Official Event"
+                : "Add Official Event";
+
+        eventType.innerHTML = `
+
+            <option value="Exam">Exam</option>
+            <option value="Holiday">Holiday</option>
+            <option value="College Event">College Event</option>
+            <option value="Assignment">Assignment</option>
+            <option value="Other">Other</option>
+
+        `;
+
+    } else {
+
+        eventFormTitle.textContent =
+            event
+                ? "Edit Personal Event"
+                : "Add Personal Event";
+
+        eventType.innerHTML = `
+
+            <option value="Personal">Personal</option>
+            <option value="Exam">Exam</option>
+            <option value="Assignment">Assignment</option>
+            <option value="Holiday">Holiday</option>
+            <option value="College Event">College Event</option>
+            <option value="Other">Other</option>
+
+        `;
+    }
+
+
+    if (event) {
+
+        eventTitle.value =
+            event.title || "";
+
+        eventDate.value =
+            event.event_date || "";
+
+        eventType.value =
+            event.event_type ||
+            (kind === "personal"
+                ? "Personal"
+                : "Other");
+
+        startTime.value =
+            cleanTime(
+                event.start_time
+            );
+
+        endTime.value =
+            cleanTime(
+                event.end_time
+            );
+
+        eventDescription.value =
+            event.description || "";
+
+    } else {
+
+        eventDate.value =
+            getTodayString();
+
+        eventType.value =
+            kind === "personal"
+                ? "Personal"
+                : "Other";
+    }
+
+
+    saveEventButton.textContent =
+        event
+            ? "Save Changes"
+            : "Save Event";
+
+
+    eventFormOverlay.classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   SAVE EVENT
+   ========================================================= */
+
+eventForm.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const title =
+            eventTitle.value.trim();
+
+        const date =
+            eventDate.value;
+
+        const type =
+            eventType.value;
+
+        const start =
+            startTime.value || null;
+
+        const end =
+            endTime.value || null;
+
+        const description =
+            eventDescription.value.trim() || null;
+
+
+        if (!title || !date) {
+
+            showStatus(
+                "Please enter a title and date.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            start &&
+            end &&
+            start > end
+        ) {
+
+            showStatus(
+                "End time cannot be earlier than start time.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        saveEventButton.disabled =
+            true;
+
+        saveEventButton.textContent =
+            "Saving...";
+
+
+        try {
+
+            if (
+                editingEventKind === "official"
+            ) {
+
+                if (!isAdmin) {
+
+                    throw new Error(
+                        "Only administrators can manage official events."
+                    );
+                }
+
+
+                if (editingEvent) {
+
+                    const {
+                        error
+                    } = await supabaseClient
+                        .from("college_events")
+                        .update({
+
+                            title: title,
+                            event_date: date,
+                            event_type: type,
+                            description: description,
+                            start_time: start,
+                            end_time: end,
+                            updated_at: new Date().toISOString()
+
+                        })
+                        .eq(
+                            "id",
+                            editingEvent.id
+                        );
+
+
+                    if (error) {
+                        throw error;
+                    }
+
+
+                    showStatus(
+                        "Official event updated successfully.",
+                        "success"
+                    );
+
+                } else {
+
+                    const {
+                        error
+                    } = await supabaseClient
+                        .from("college_events")
+                        .insert({
+
+                            title: title,
+                            event_date: date,
+                            event_type: type,
+                            description: description,
+                            start_time: start,
+                            end_time: end,
+                            created_by: currentUser.id
+
+                        });
+
+
+                    if (error) {
+                        throw error;
+                    }
+
+
+                    showStatus(
+                        "Official event added successfully.",
+                        "success"
+                    );
+                }
+
+            } else {
+
+                if (editingEvent) {
+
+                    const {
+                        error
+                    } = await supabaseClient
+                        .from("personal_events")
+                        .update({
+
+                            title: title,
+                            event_date: date,
+                            event_type: type,
+                            description: description,
+                            start_time: start,
+                            end_time: end,
+                            updated_at: new Date().toISOString()
+
+                        })
+                        .eq(
+                            "id",
+                            editingEvent.id
+                        )
+                        .eq(
+                            "user_id",
+                            currentUser.id
+                        );
+
+
+                    if (error) {
+                        throw error;
+                    }
+
+
+                    showStatus(
+                        "Personal event updated successfully.",
+                        "success"
+                    );
+
+                } else {
+
+                    const {
+                        error
+                    } = await supabaseClient
+                        .from("personal_events")
+                        .insert({
+
+                            user_id: currentUser.id,
+                            title: title,
+                            event_date: date,
+                            event_type: type,
+                            description: description,
+                            start_time: start,
+                            end_time: end
+
+                        });
+
+
+                    if (error) {
+                        throw error;
+                    }
+
+
+                    showStatus(
+                        "Personal event added successfully.",
+                        "success"
+                    );
+                }
+            }
+
+
+            closeEventForm();
+
+            await loadAllEvents();
 
             renderCalendar();
 
+            renderUpcomingEvents();
+
+        }
+        catch (error) {
+
+            console.error(
+                "Save event error:",
+                error
+            );
+
+            showStatus(
+                error.message ||
+                "Could not save the event.",
+                "error"
+            );
+
+        }
+        finally {
+
+            saveEventButton.disabled =
+                false;
+
+            saveEventButton.textContent =
+                editingEvent
+                    ? "Save Changes"
+                    : "Save Event";
+        }
+
+    }
+);
+
+
+/* =========================================================
+   OFFICIAL COMPLETION
+   ========================================================= */
+
+async function setOfficialCompletion(
+    event,
+    completed
+) {
+
+    if (completed) {
+
+        const {
+            error
+        } = await supabaseClient
+            .from("college_event_completions")
+            .upsert(
+                {
+                    event_id: event.id,
+                    user_id: currentUser.id,
+                    completed: true,
+                    completed_at:
+                        new Date().toISOString()
+                },
+                {
+                    onConflict:
+                        "event_id,user_id"
+                }
+            );
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            showStatus(
+                "Could not mark the event completed.",
+                "error"
+            );
+
+            return;
+        }
+
+    } else {
+
+        const {
+            error
+        } = await supabaseClient
+            .from("college_event_completions")
+            .delete()
+            .eq(
+                "event_id",
+                event.id
+            )
+            .eq(
+                "user_id",
+                currentUser.id
+            );
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            showStatus(
+                "Could not remove completion.",
+                "error"
+            );
+
+            return;
+        }
+    }
+
+
+    await loadAllEvents();
+
+    renderCalendar();
+
+    renderUpcomingEvents();
+
+    closeEventDetails();
+
+    showStatus(
+        completed
+            ? "Event marked as completed."
+            : "Event marked as incomplete.",
+        "success"
+    );
+}
+
+
+/* =========================================================
+   PERSONAL COMPLETION
+   ========================================================= */
+
+async function setPersonalCompletion(
+    event,
+    completed
+) {
+
+    const {
+        error
+    } = await supabaseClient
+        .from("personal_events")
+        .update({
+
+            completed: completed,
+
+            updated_at:
+                new Date().toISOString()
+
+        })
+        .eq(
+            "id",
+            event.id
+        )
+        .eq(
+            "user_id",
+            currentUser.id
+        );
+
+
+    if (error) {
+
+        console.error(
+            error
+        );
+
+        showStatus(
+            "Could not update completion.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    await loadAllEvents();
+
+    renderCalendar();
+
+    renderUpcomingEvents();
+
+    closeEventDetails();
+
+    showStatus(
+        completed
+            ? "Event marked as completed."
+            : "Event marked as incomplete.",
+        "success"
+    );
+}
+
+
+/* =========================================================
+   DELETE OFFICIAL EVENT
+   ========================================================= */
+
+async function deleteOfficialEvent(
+    event
+) {
+
+    if (!isAdmin) {
+
+        showStatus(
+            "Only administrators can delete official events.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("college_events")
+        .delete()
+        .eq(
+            "id",
+            event.id
+        );
+
+
+    if (error) {
+
+        console.error(
+            error
+        );
+
+        showStatus(
+            "Could not delete official event.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    closeEventDetails();
+
+    await loadAllEvents();
+
+    renderCalendar();
+
+    renderUpcomingEvents();
+
+    showStatus(
+        "Official event deleted.",
+        "success"
+    );
+}
+
+
+/* =========================================================
+   DELETE PERSONAL EVENT
+   ========================================================= */
+
+async function deletePersonalEvent(
+    event
+) {
+
+    const {
+        error
+    } = await supabaseClient
+        .from("personal_events")
+        .delete()
+        .eq(
+            "id",
+            event.id
+        )
+        .eq(
+            "user_id",
+            currentUser.id
+        );
+
+
+    if (error) {
+
+        console.error(
+            error
+        );
+
+        showStatus(
+            "Could not delete personal event.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    closeEventDetails();
+
+    await loadAllEvents();
+
+    renderCalendar();
+
+    renderUpcomingEvents();
+
+    showStatus(
+        "Personal event deleted.",
+        "success"
+    );
+}
+
+
+/* =========================================================
+   CHECK OFFICIAL COMPLETION
+   ========================================================= */
+
+function isOfficialCompleted(
+    eventId
+) {
+
+    return officialCompletions.some(
+        function(item) {
+
+            return (
+                String(item.event_id) ===
+                String(eventId)
+            ) &&
+            item.completed === true;
+
         }
     );
+}
 
 
-    /* =========================================================
-       BUTTONS
-       ========================================================= */
+/* =========================================================
+   MONTH NAVIGATION
+   ========================================================= */
 
-    addOfficialEventButton.addEventListener(
-        "click",
-        openAddOfficialEvent
+document.getElementById(
+    "previousMonth"
+).addEventListener(
+    "click",
+    async function() {
+
+        currentMonth--;
+
+        if (currentMonth < 0) {
+
+            currentMonth = 11;
+            currentYear--;
+        }
+
+        renderCalendar();
+    }
+);
+
+
+document.getElementById(
+    "nextMonth"
+).addEventListener(
+    "click",
+    async function() {
+
+        currentMonth++;
+
+        if (currentMonth > 11) {
+
+            currentMonth = 0;
+            currentYear++;
+        }
+
+        renderCalendar();
+    }
+);
+
+
+document.getElementById(
+    "todayButton"
+).addEventListener(
+    "click",
+    function() {
+
+        const today =
+            new Date();
+
+        currentMonth =
+            today.getMonth();
+
+        currentYear =
+            today.getFullYear();
+
+        renderCalendar();
+    }
+);
+
+
+/* =========================================================
+   ADD BUTTONS
+   ========================================================= */
+
+addPersonalButton.addEventListener(
+    "click",
+    function() {
+
+        openEventForm(
+            "personal"
+        );
+    }
+);
+
+
+addOfficialButton.addEventListener(
+    "click",
+    function() {
+
+        if (!isAdmin) {
+            return;
+        }
+
+        openEventForm(
+            "official"
+        );
+    }
+);
+
+
+/* =========================================================
+   CLOSE MODALS
+   ========================================================= */
+
+document.getElementById(
+    "closeEventForm"
+).addEventListener(
+    "click",
+    closeEventForm
+);
+
+
+document.getElementById(
+    "cancelEventForm"
+).addEventListener(
+    "click",
+    closeEventForm
+);
+
+
+document.getElementById(
+    "closeEventDetails"
+).addEventListener(
+    "click",
+    closeEventDetails
+);
+
+
+eventFormOverlay.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            eventFormOverlay
+        ) {
+            closeEventForm();
+        }
+    }
+);
+
+
+eventDetailsOverlay.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            eventDetailsOverlay
+        ) {
+            closeEventDetails();
+        }
+    }
+);
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Escape") {
+
+            closeEventForm();
+
+            closeEventDetails();
+        }
+    }
+);
+
+
+/* =========================================================
+   CLOSE FORM
+   ========================================================= */
+
+function closeEventForm() {
+
+    eventFormOverlay.classList.remove(
+        "show"
+    );
+
+    editingEvent = null;
+
+    editingEventKind = null;
+
+    eventForm.reset();
+}
+
+
+/* =========================================================
+   CLOSE DETAILS
+   ========================================================= */
+
+function closeEventDetails() {
+
+    eventDetailsOverlay.classList.remove(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   STATUS MESSAGE
+   ========================================================= */
+
+let statusTimer = null;
+
+
+function showStatus(
+    message,
+    type
+) {
+
+    statusMessage.textContent =
+        message;
+
+    statusMessage.className =
+        `status-message show ${type}`;
+
+
+    clearTimeout(
+        statusTimer
     );
 
 
-    addPersonalEventButton.addEventListener(
-        "click",
-        openAddPersonalEvent
+    statusTimer =
+        setTimeout(
+            function() {
+
+                statusMessage.className =
+                    "status-message";
+
+            },
+            4000
+        );
+}
+
+
+/* =========================================================
+   DATE HELPERS
+   ========================================================= */
+
+function makeDateString(
+    year,
+    month,
+    day
+) {
+
+    const monthString =
+        String(month + 1)
+            .padStart(2, "0");
+
+    const dayString =
+        String(day)
+            .padStart(2, "0");
+
+    return `${year}-${monthString}-${dayString}`;
+}
+
+
+function getTodayString() {
+
+    const today =
+        new Date();
+
+    return makeDateString(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
+}
+
+
+function isToday(
+    year,
+    month,
+    day
+) {
+
+    const today =
+        new Date();
+
+    return (
+        year === today.getFullYear() &&
+        month === today.getMonth() &&
+        day === today.getDate()
+    );
+}
+
+
+function getDaysRemaining(
+    eventDate
+) {
+
+    const today =
+        new Date();
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
     );
 
 
-    /* =========================================================
-       START
-       ========================================================= */
+    const event =
+        new Date(
+            eventDate + "T00:00:00"
+        );
 
-    loadUser();
+    event.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    const difference =
+        event.getTime() -
+        today.getTime();
+
+
+    return Math.ceil(
+        difference /
+        (1000 * 60 * 60 * 24)
+    );
+}
+
+
+/* =========================================================
+   FORMAT HELPERS
+   ========================================================= */
+
+function formatLongDate(
+    dateString
+) {
+
+    const date =
+        new Date(
+            dateString + "T00:00:00"
+        );
+
+
+    return date.toLocaleDateString(
+        "en-IN",
+        {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        }
+    );
+}
+
+
+function formatShortDate(
+    dateString
+) {
+
+    const date =
+        new Date(
+            dateString + "T00:00:00"
+        );
+
+
+    return date.toLocaleDateString(
+        "en-IN",
+        {
+            day: "numeric",
+            month: "short"
+        }
+    );
+}
+
+
+function formatTime(
+    timeString
+) {
+
+    if (!timeString) {
+        return "";
+    }
+
+
+    const parts =
+        timeString.split(":");
+
+
+    const hours =
+        Number(parts[0]);
+
+    const minutes =
+        parts[1];
+
+
+    const suffix =
+        hours >= 12
+            ? "PM"
+            : "AM";
+
+
+    const displayHour =
+        hours % 12 || 12;
+
+
+    return `${displayHour}:${minutes} ${suffix}`;
+}
+
+
+function cleanTime(
+    timeString
+) {
+
+    if (!timeString) {
+        return "";
+    }
+
+    return timeString.substring(
+        0,
+        5
+    );
+}
+
+
+/* =========================================================
+   HTML SAFETY
+   ========================================================= */
+
+function escapeHTML(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
 
 </script>
 
