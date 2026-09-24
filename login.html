@@ -102,6 +102,17 @@
             </button>
 
 
+            <!-- Forgot Password -->
+
+            <button
+                type="button"
+                class="forgot-password-btn"
+                onclick="forgotPassword()"
+            >
+                Forgot Password?
+            </button>
+
+
             <!-- Message -->
 
             <p
@@ -360,6 +371,83 @@
 
 
         /* ==========================================
+           FORGOT PASSWORD
+           ========================================== */
+
+        async function forgotPassword() {
+
+            const email =
+                document
+                    .getElementById("email")
+                    .value
+                    .trim();
+
+
+            if (!email) {
+
+                showMessage(
+                    "Please enter your email address first."
+                );
+
+                return;
+            }
+
+
+            showMessage(
+                "Sending password reset email...",
+                "success"
+            );
+
+
+            /*
+             * After clicking the reset link,
+             * Supabase will return the user to
+             * reset-password.html.
+             */
+
+            const resetPage =
+                window.location.origin +
+                window.location.pathname.replace(
+                    "login.html",
+                    "reset-password.html"
+                );
+
+
+            const {
+                error
+            } = await supabaseClient.auth
+                .resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo: resetPage
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    "Password reset error:",
+                    error
+                );
+
+                showMessage(
+                    "Unable to send the password reset email. Please check the email address and try again."
+                );
+
+                return;
+            }
+
+
+            showMessage(
+                "Password reset email sent. Please check your inbox and follow the instructions.",
+                "success"
+            );
+
+        }
+
+
+        /* ==========================================
            ENTER KEY SUPPORT
            ========================================== */
 
@@ -380,6 +468,46 @@
         );
 
     </script>
+
+
+    <!-- ==========================================
+         FORGOT PASSWORD BUTTON STYLE
+         ========================================== -->
+
+    <style>
+
+        .forgot-password-btn {
+
+            display: block;
+
+            margin: 14px auto 0;
+
+            border: none;
+
+            background: transparent;
+
+            color: #005599;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            padding: 5px 8px;
+
+        }
+
+
+        .forgot-password-btn:hover {
+
+            color: #0066CC;
+
+            text-decoration: underline;
+
+        }
+
+    </style>
 
 </body>
 
