@@ -21,11 +21,11 @@
             <h1>Student Semester Command Center</h1>
 
             <p>
-                Sign in to access your academic dashboard.
+                Sign in or create an account to access your academic dashboard.
             </p>
 
 
-            <!-- Login Form -->
+            <!-- Email -->
 
             <div class="form-group">
 
@@ -43,6 +43,8 @@
             </div>
 
 
+            <!-- Password -->
+
             <div class="form-group">
 
                 <label for="password">
@@ -58,6 +60,8 @@
 
             </div>
 
+
+            <!-- Student Name -->
 
             <div class="form-group">
 
@@ -75,7 +79,10 @@
             </div>
 
 
+            <!-- Login Button -->
+
             <button
+                type="button"
                 class="login-btn"
                 onclick="login()"
             >
@@ -83,9 +90,24 @@
             </button>
 
 
+            <!-- Create Account Button -->
+
+            <button
+                type="button"
+                class="login-btn secondary-btn"
+                onclick="createAccount()"
+                style="margin-top: 10px;"
+            >
+                Create New Account
+            </button>
+
+
+            <!-- Message -->
+
             <p
                 id="message"
                 class="error"
+                aria-live="polite"
             ></p>
 
         </section>
@@ -96,7 +118,7 @@
     <script>
 
         /* ==========================================
-           SUPABASE
+           SUPABASE CONFIGURATION
            ========================================== */
 
         const SUPABASE_URL =
@@ -114,10 +136,10 @@
 
 
         /* ==========================================
-           LOGIN
+           GET FORM VALUES
            ========================================== */
 
-        async function login() {
+        function getFormValues() {
 
             const email =
                 document
@@ -125,12 +147,10 @@
                     .value
                     .trim();
 
-
             const password =
                 document
                     .getElementById("password")
                     .value;
-
 
             const studentName =
                 document
@@ -138,23 +158,62 @@
                     .value
                     .trim();
 
+            return {
+                email,
+                password,
+                studentName
+            };
 
-            const message =
-                document.getElementById(
-                    "message"
-                );
+        }
 
 
-            message.textContent = "";
+        /* ==========================================
+           SHOW MESSAGE
+           ========================================== */
+
+        function showMessage(message, type = "error") {
+
+            const messageElement =
+                document.getElementById("message");
+
+            messageElement.textContent =
+                message;
+
+            messageElement.className =
+                type === "success"
+                    ? "success-message"
+                    : "error";
+
+        }
+
+
+        /* ==========================================
+           LOGIN EXISTING ACCOUNT
+           ========================================== */
+
+        async function login() {
+
+            const {
+                email,
+                password,
+                studentName
+            } = getFormValues();
 
 
             if (!email || !password || !studentName) {
 
-                message.textContent =
-                    "Please enter your email, password and name.";
+                showMessage(
+                    "Please enter your email, password and name."
+                );
 
                 return;
             }
+
+
+            showMessage(
+                "Signing in...",
+                "success"
+            );
 
 
             const {
@@ -169,19 +228,20 @@
 
             if (error) {
 
-                message.textContent =
-                    "Login failed. Please check your email and password.";
-
                 console.error(
                     "Login error:",
                     error
+                );
+
+                showMessage(
+                    "Login failed. Please check your email and password."
                 );
 
                 return;
             }
 
 
-            /* Save student name for dashboard */
+            /* Save student name locally */
 
             localStorage.setItem(
                 "studentName",
@@ -198,14 +258,119 @@
 
 
         /* ==========================================
-           ENTER KEY LOGIN
+           CREATE NEW ACCOUNT
+           ========================================== */
+
+        async function createAccount() {
+
+            const {
+                email,
+                password,
+                studentName
+            } = getFormValues();
+
+
+            if (!email || !password || !studentName) {
+
+                showMessage(
+                    "Please enter your email, password and name."
+                );
+
+                return;
+            }
+
+
+            if (password.length < 6) {
+
+                showMessage(
+                    "Password must be at least 6 characters."
+                );
+
+                return;
+            }
+
+
+            showMessage(
+                "Creating your account...",
+                "success"
+            );
+
+
+            const {
+                data,
+                error
+            } = await supabaseClient.auth
+                .signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            student_name: studentName
+                        }
+                    }
+                });
+
+
+            if (error) {
+
+                console.error(
+                    "Account creation error:",
+                    error
+                );
+
+
+                showMessage(
+                    error.message
+                );
+
+                return;
+            }
+
+
+            /*
+             * Supabase may require email confirmation.
+             * If confirmation is enabled, session will be null.
+             */
+
+            if (!data.session) {
+
+                showMessage(
+                    "Account created. Please check your email and confirm your account before logging in.",
+                    "success"
+                );
+
+                return;
+            }
+
+
+            /* Save student name locally */
+
+            localStorage.setItem(
+                "studentName",
+                studentName
+            );
+
+
+            /* Open dashboard */
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        /* ==========================================
+           ENTER KEY SUPPORT
            ========================================== */
 
         document.addEventListener(
             "keydown",
             function (event) {
 
-                if (event.key === "Enter") {
+                if (
+                    event.key === "Enter" &&
+                    document.activeElement.tagName !== "BUTTON"
+                ) {
 
                     login();
 
