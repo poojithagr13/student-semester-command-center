@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<<<<<<< HEAD
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -908,10 +909,23 @@
     }
 }
 </style>
+=======
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Exam Calendar | Student Semester Command Center</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+>>>>>>> 43f6e28759ac90e86f84a45419a3793e6ada9313
 </head>
 
 <body>
 
+<<<<<<< HEAD
 <main class="calendar-page">
 
     <a href="index.html" class="back-link">
@@ -3478,3 +3492,386 @@ function escapeHTML(
 
 </body>
 </html>
+=======
+    <main class="container">
+
+        <!-- Back to Dashboard -->
+        <a href="index.html" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+
+        <!-- Page Header -->
+        <h1>College Calendar</h1>
+
+        <p class="subtitle">
+            Official college events, exams, holidays and important dates.
+        </p>
+
+
+        <!-- Official Events -->
+        <section>
+
+            <h2>Official College Events</h2>
+
+            <div
+                id="examList"
+                class="calendar-list"
+            >
+                <div class="empty-message">
+                    Loading college events...
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script>
+
+        /* ==========================================
+           SUPABASE
+           ========================================== */
+
+        const SUPABASE_URL =
+            "https://bjfccfveekebgbkqreyp.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable_X9kztDgnl8G2lbJFT-3gJw_4fVkRHeQ";
+
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        const examList =
+            document.getElementById("examList");
+
+
+        /* ==========================================
+           LOAD OFFICIAL COLLEGE EVENTS
+           ========================================== */
+
+        async function loadCollegeEvents() {
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+                .from("college_events")
+                .select("*")
+                .order(
+                    "event_date",
+                    {
+                        ascending: true
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    "Error loading college events:",
+                    error
+                );
+
+                examList.innerHTML = `
+                    <div class="empty-message">
+                        Could not load college events.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            displayCollegeEvents(
+                data || []
+            );
+
+        }
+
+
+        /* ==========================================
+           CALCULATE DAYS REMAINING
+           ========================================== */
+
+        function getDaysRemaining(eventDate) {
+
+            const today =
+                new Date();
+
+            today.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+
+            const event =
+                new Date(
+                    eventDate + "T00:00:00"
+                );
+
+
+            const difference =
+                event.getTime()
+                - today.getTime();
+
+
+            return Math.ceil(
+                difference
+                / (1000 * 60 * 60 * 24)
+            );
+
+        }
+
+
+        /* ==========================================
+           FORMAT DATE
+           ========================================== */
+
+        function formatDate(dateString) {
+
+            const date =
+                new Date(
+                    dateString + "T00:00:00"
+                );
+
+
+            return date.toLocaleDateString(
+                "en-IN",
+                {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+
+        }
+
+
+        /* ==========================================
+           DISPLAY EVENTS
+           ========================================== */
+
+        function displayCollegeEvents(events) {
+
+            if (events.length === 0) {
+
+                examList.innerHTML = `
+                    <div class="empty-message">
+                        No college events have been added yet.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            examList.innerHTML = "";
+
+
+            events.forEach(function (event) {
+
+                const daysLeft =
+                    getDaysRemaining(
+                        event.event_date
+                    );
+
+
+                let countdownText = "";
+
+
+                if (daysLeft > 1) {
+
+                    countdownText =
+                        daysLeft + " days left";
+
+                }
+                else if (daysLeft === 1) {
+
+                    countdownText =
+                        "1 day left";
+
+                }
+                else if (daysLeft === 0) {
+
+                    countdownText =
+                        "TODAY";
+
+                }
+                else if (daysLeft === -1) {
+
+                    countdownText =
+                        "Event was yesterday";
+
+                }
+                else {
+
+                    countdownText =
+                        "Event completed";
+
+                }
+
+
+                /* Create event card */
+
+                const eventItem =
+                    document.createElement("div");
+
+
+                eventItem.className =
+                    "calendar-event";
+
+
+                /* Event title */
+
+                const title =
+                    document.createElement("h3");
+
+
+                title.textContent =
+                    event.title;
+
+
+                /* Event date */
+
+                const date =
+                    document.createElement("p");
+
+
+                date.className =
+                    "event-date";
+
+
+                date.textContent =
+                    formatDate(
+                        event.event_date
+                    );
+
+
+                /* Event type */
+
+                const type =
+                    document.createElement("p");
+
+
+                type.innerHTML =
+                    "<strong>Event Type:</strong> "
+                    + escapeHTML(
+                        event.event_type
+                    );
+
+
+                /* Countdown */
+
+                const countdown =
+                    document.createElement("p");
+
+
+                countdown.className =
+                    "days-remaining";
+
+
+                countdown.innerHTML =
+                    "<strong>"
+                    + escapeHTML(
+                        countdownText
+                    )
+                    + "</strong>";
+
+
+                /* Description */
+
+                eventItem.appendChild(
+                    title
+                );
+
+                eventItem.appendChild(
+                    date
+                );
+
+                eventItem.appendChild(
+                    type
+                );
+
+                eventItem.appendChild(
+                    countdown
+                );
+
+
+                if (event.description) {
+
+                    const description =
+                        document.createElement("p");
+
+
+                    description.textContent =
+                        event.description;
+
+
+                    eventItem.appendChild(
+                        description
+                    );
+
+                }
+
+
+                examList.appendChild(
+                    eventItem
+                );
+
+            });
+
+        }
+
+
+        /* ==========================================
+           PROTECT DISPLAYED TEXT
+           ========================================== */
+
+        function escapeHTML(text) {
+
+            return String(text)
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
+        }
+
+
+        /* ==========================================
+           INITIAL LOAD
+           ========================================== */
+
+        loadCollegeEvents();
+
+    </script>
+
+</body>
+
+</html>
+>>>>>>> 43f6e28759ac90e86f84a45419a3793e6ada9313
